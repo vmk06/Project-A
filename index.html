@@ -7,64 +7,68 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root{
-      --bg:#0b1220;--panel:#111827;--card:#0f172a;--muted:#cbd5e1;--text:#e5e7eb;
-      --accent:#22d3ee;--green:#10b981;--amber:#f59e0b;--rose:#f43f5e;--violet:#8b5cf6;--blue:#3b82f6;
-      --ok:#16a34a;--warn:#f59e0b;--bad:#ef4444;
+      --bg-start:#e3f2fd;--bg-end:#ffffff;
+      --panel:#ffffff;--card:#ffffff;--muted:#546e7a;--text:#0d47a1;
+      --accent:#03a9f4;--green:#00c853;--amber:#ffab00;--rose:#f50057;--violet:#651fff;--blue:#2979ff;
+      --ok:#00c853;--warn:#ffab00;--bad:#f50057;
+      --border-light:#bbdefb;--border-dark:#90caf9;
+      --text-light:#ffffff;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";background:var(--bg);color:var(--text)}
-    header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,rgba(11,18,32,.9),rgba(11,18,32,.5));backdrop-filter:blur(6px);border-bottom:1px solid #1f2937}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";background:linear-gradient(180deg, var(--bg-start), var(--bg-end));color:var(--text); line-height:1.5;}
+    header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.7));backdrop-filter:blur(8px);border-bottom:1px solid var(--border-light)}
     .wrap{max-width:1200px;margin:0 auto;padding:16px}
-    h1{font-size:22px;margin:0 0 6px}
+    h1{font-size:22px;margin:0 0 6px; color: var(--blue);}
     .sub{color:var(--muted);font-size:13px}
-    .panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:14px;margin:16px 0}
+    .panel{background:var(--panel);border:1px solid var(--border-light);border-radius:16px;padding:14px;margin:16px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);}
     .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-    .badge{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid #334155;background:#0b1220}
-    .btn{background:#0ea5e9;border:0;color:#02121f;padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer}
-    .btn.secondary{background:#111827;color:#cbd5e1;border:1px solid #2a3445}
+    .badge{padding:6px 12px;border-radius:999px;font-size:12px;border:1px solid var(--border-light);background:var(--bg-start); color: var(--text);}
+    .btn{background:linear-gradient(45deg, var(--blue), var(--accent));border:0;color:var(--text-light);padding:8px 14px;border-radius:10px;font-weight:600;cursor:pointer; transition: transform 0.2s ease;}
+    .btn:hover{transform: scale(1.05);}
+    .btn.secondary{background:transparent;color:var(--blue);border:1px solid var(--border-light)}
     .grid{display:grid;grid-template-columns:260px 1fr;gap:12px}
-    .left{background:var(--card);border:1px solid #1e293b;border-radius:14px;padding:8px}
-    .right{background:var(--card);border:1px solid #1e293b;border-radius:14px;overflow:auto}
-    .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .left{background:var(--card);border:1px solid var(--border-light);border-radius:14px;padding:8px}
+    .right{background:var(--card);border:1px solid var(--border-light);border-radius:14px;overflow:auto}
+    .legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
     .legend .item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
     .swatch{width:12px;height:12px;border-radius:3px}
-    .row{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px dashed #1f2937}
+    .row{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px dashed var(--border-light)}
     .row:last-child{border-bottom:0}
-    .row small{color:#93a3b8}
-    .sticky-head{position:sticky;top:0;background:#0b1220;border-bottom:1px solid #1f2937;padding:6px 8px;z-index:5}
+    .row small{color:#78909c}
+    .sticky-head{position:sticky;top:0;background:var(--bg-start);border-bottom:1px solid var(--border-light);padding:6px 8px;z-index:5; font-weight: 600;}
     svg{display:block}
-    .tooltip{position:fixed;pointer-events:none;background:#0b1220;border:1px solid #334155;color:#e5e7eb;padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.2;box-shadow:0 8px 20px rgba(0,0,0,.35);opacity:0;transform:translateY(6px);transition:opacity .12s ease, transform .12s ease}
-    .pill{display:inline-block;padding:2px 6px;border-radius:999px;font-size:11px;margin-left:6px;color:#0b1220}
-    .notice{font-size:12px;color:#9fb0c9}
+    .tooltip{position:fixed;pointer-events:none;background:var(--text);border:1px solid var(--border-dark);color:var(--text-light);padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.2;box-shadow:0 8px 20px rgba(0,0,0,.2);opacity:0;transform:translateY(6px);transition:opacity .12s ease, transform .12s ease}
+    .pill{display:inline-block;padding:2px 6px;border-radius:999px;font-size:11px;margin-left:6px;color:var(--text-light)}
+    .notice{font-size:12px;color:var(--muted)}
     .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
-    .kpi .card{background:#0b1220;border:1px solid #1f2937;border-radius:10px;padding:10px}
-    .kpi .label{font-size:11px;color:#93a3b8}
-    .kpi .value{font-size:18px;font-weight:700}
+    .kpi .card{background:var(--bg-start);border:1px solid var(--border-light);border-radius:10px;padding:10px}
+    .kpi .label{font-size:11px;color:var(--muted)}
+    .kpi .value{font-size:18px;font-weight:700; color:var(--blue);}
     .filter{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
-    .filter label{display:flex;align-items:center;gap:6px;font-size:12px;color:#cbd5e1}
+    .filter label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text)}
     .scale{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
     .section-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .canvas-card{background:var(--card);border:1px solid #1e293b;border-radius:14px;padding:14px;margin-top:10px}
+    .canvas-card{background:var(--panel);border:1px solid var(--border-light);border-radius:14px;padding:14px;margin-top:10px}
 
     /* Financial Simulator */
     .sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .sim-controls{display:grid;gap:10px}
     .field{display:grid;gap:6px}
-    .field label{font-size:12px;color:#cbd5e1}
+    .field label{font-size:12px;color:var(--text)}
     input[type="range"]{width:100%}
-    input[type="number"]{background:#0b1220;border:1px solid #334155;color:#e5e7eb;border-radius:8px;padding:8px}
+    input[type="number"]{background:var(--bg-start);border:1px solid var(--border-light);color:var(--text);border-radius:8px;padding:8px}
     .result{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px}
-    .result .card{background:#0b1220;border:1px solid #1f2937;border-radius:10px;padding:10px}
-    .result .label{font-size:11px;color:#93a3b8}
+    .result .card{background:var(--bg-start);border:1px solid var(--border-light);border-radius:10px;padding:10px}
+    .result .label{font-size:11px;color:var(--muted)}
     .result .value{font-size:18px;font-weight:700}
     .range-wrap{position:relative}
     .breakeven-tick{position:absolute;top:10px;width:2px;height:18px;background:var(--rose);transform:translateX(-1px)}
     .breakeven-tag{position:absolute;top:-10px;font-size:10px;color:var(--rose);transform:translateX(-50%)}
     .slot-row{display:flex;gap:8px;margin-top:10px}
-    .slot{background:#0b1220;border:1px solid #262f3a;padding:8px;border-radius:8px}
-    .note-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#0b1220;border:1px solid #334155;padding:12px;border-radius:10px;z-index:40;width:420px}
-    .note-modal textarea{width:100%;height:120px;background:#071021;color:#e5e7eb;border:1px solid #24303a;padding:8px;border-radius:6px}
-    .note-icon{font-size:12px;color:#f59e0b;margin-left:8px}
+    .slot{background:var(--bg-start);border:1px solid var(--border-light);padding:8px;border-radius:8px}
+    .note-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--panel);border:1px solid var(--border-dark);padding:12px;border-radius:10px;z-index:40;width:420px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);}
+    .note-modal textarea{width:100%;height:120px;background:var(--bg-start);color:var(--text);border:1px solid var(--border-light);padding:8px;border-radius:6px}
+    .note-icon{font-size:12px;color:var(--amber);margin-left:8px}
     canvas{max-width:100%}
 
     @media (max-width:900px){
@@ -83,7 +87,6 @@
   </header>
 
   <main class="wrap">
-    <!-- ========== SECTION A: INTERACTIVE GANTT ========= -->
     <section class="panel">
       <div class="section-title">
         <div class="controls">
@@ -138,13 +141,12 @@
       <p class="notice">Tip: Use the filters to focus on a specific track; zoom to adjust month width. Click a task to add/view notes. Print to save as PDF for investor updates.</p>
     </section>
 
-    <!-- ========== SECTION B: OPEX vs BUDGET ========= -->
     <section class="panel">
       <div class="section-title">
         <h2 style="margin:0;font-size:18px">OPEX Allocation – Scenario Comparison</h2>
         <div class="controls">
           <label class="badge">Select Budget:
-            <select id="budgetSelect" style="margin-left:6px;background:#0b1220;color:#e5e7eb;border:1px solid #334155;border-radius:8px;padding:6px">
+            <select id="budgetSelect" style="margin-left:6px;background:var(--bg-start);color:var(--text);border:1px solid var(--border-light);border-radius:8px;padding:6px">
               <option value="150">₹1.5 Cr</option>
               <option value="160">₹1.6 Cr</option>
               <option value="210" selected>₹2.1 Cr</option>
@@ -160,7 +162,6 @@
       <p class="notice">Values shown in <strong>₹ Lakhs</strong>. Changing budget updates the Financial Simulator's fixed expenses automatically.</p>
     </section>
 
-    <!-- ========== SECTION C: FINANCIAL SIMULATOR ========= -->
     <section class="panel">
       <div class="section-title">
         <h2 style="margin:0;font-size:18px">Intake, Fees & Breakeven Simulator</h2>
@@ -232,7 +233,6 @@
 
   <div class="tooltip" id="tooltip"></div>
 
-  <!-- Note Modal -->
   <div id="noteModal" class="note-modal" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
       <strong id="noteTitle">Task Note</strong>
@@ -260,7 +260,6 @@ const TRACKS = {
   marketing:   { label: 'Marketing & Admissions',  color: getComputedStyle(document.documentElement).getPropertyValue('--rose').trim() },
 };
 
-// Tasks now include a 'phase' property (Planning / Recruitment / Pre-Launch / Launch / Stabilization)
 const TASKS = [
   { id:'aff1', name:'Legal entity & compliance framework', owner:'Admin Head', start:'2025-03-01', end:'2025-04-15', track:'approvals', critical:true, phase:'Planning' },
   { id:'aff2', name:'Telangana Board Affiliation – application & inspections', owner:'Principal', start:'2025-04-10', end:'2025-08-31', track:'approvals', critical:true, phase:'Planning' },
@@ -290,7 +289,7 @@ const TASKS = [
   { id:'yz3', name:'Add librarian + admin (Y2)', owner:'Admin', start:'2026-09-15', end:'2026-10-15', track:'hiring', critical:false, phase:'Stabilization' },
 ];
 
-let MONTH_WIDTH = 36; // px per month (zoomable)
+let MONTH_WIDTH = 36;
 let filters = new Set(Object.keys(TRACKS));
 let phaseFilter = 'All';
 
@@ -302,7 +301,6 @@ function xFromDate(date){ const m = monthDiff(START, date); return m*MONTH_WIDTH
 function widthFromRange(s,e){ const md = monthDiff(s,e)+1; return md*MONTH_WIDTH - 6; }
 function fmt(d){ return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'2-digit'}); }
 
-// Notes storage (persist in localStorage)
 const NOTES_KEY = 'projectA_task_notes_v1';
 let notes = {};
 try{ notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}'); }catch(e){ notes = {}; }
@@ -350,12 +348,14 @@ function buildHead(){
   const svgW = months*MONTH_WIDTH + 40;
   const h = 40; let x=0; const y=0;
   let svg = `<svg width="${svgW}" height="${h}">`;
+  const borderLight = getComputedStyle(document.documentElement).getPropertyValue('--border-light').trim();
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
   for(let i=0;i<months;i++){
     const dt = new Date(START.getFullYear(), START.getMonth()+i, 1);
     const label = dt.toLocaleDateString(undefined,{year:'2-digit',month:'short'});
     svg += `<g transform="translate(${x},${y})">
-      <rect x="0" y="0" width="${MONTH_WIDTH}" height="${h}" fill="transparent" stroke="#1f2937" />
-      <text x="${MONTH_WIDTH/2}" y="24" fill="#cbd5e1" font-size="12" text-anchor="middle">${label}</text>
+      <rect x="0" y="0" width="${MONTH_WIDTH}" height="${h}" fill="transparent" stroke="${borderLight}" />
+      <text x="${MONTH_WIDTH/2}" y="24" fill="${textColor}" font-size="12" text-anchor="middle">${label}</text>
     </g>`;
     x+=MONTH_WIDTH;
   }
@@ -369,21 +369,15 @@ function buildChart(list){
   const svgW = months*MONTH_WIDTH + 40;
   let svg = `<svg width="${svgW}" height="${totalH}">`;
 
-  for(let i=0;i<list.length;i++){
-    const y = i*(rowH+gap)+4;
-    svg += `<rect x="0" y="${y}" width="${svgW}" height="${rowH}" fill="transparent" stroke="#0f172a"/>`;
-  }
-
   list.forEach((t,idx)=>{
     const s = toDate(t.start), e = toDate(t.end);
     const x = xFromDate(s)+3; const w = clamp(widthFromRange(s,e), 12, 20000);
     const y = idx*(rowH+gap)+8; const r=6;
-    const color = TRACKS[t.track].color; const darker = '#0b1220';
+    const color = TRACKS[t.track].color;
     svg += `
       <g class="bar" data-id="${t.id}" data-name="${t.name}" data-owner="${t.owner}" data-start="${fmt(s)}" data-end="${fmt(e)}" data-track="${TRACKS[t.track].label}" data-phase="${t.phase}" data-critical="${t.critical?'Yes':'No'}">
-        <rect x="${x}" y="${y}" rx="${r}" ry="${r}" width="${w}" height="${rowH-8}" fill="${color}" opacity="0.95" />
-        <rect x="${x}" y="${y}" rx="${r}" ry="${r}" width="${w}" height="${rowH-8}" fill="${darker}" opacity="0.12" />
-        <text x="${x+8}" y="${y+18}" fill="#06131e" font-weight="700" font-size="12">${t.name}</text>
+        <rect x="${x}" y="${y}" rx="${r}" ry="${r}" width="${w}" height="${rowH-8}" fill="${color}" />
+        <text x="${x+8}" y="${y+18}" fill="#fff" font-weight="600" font-size="12">${t.name}</text>
       </g>`;
   });
 
@@ -426,7 +420,6 @@ document.getElementById('zoomIn').onclick = ()=>{ MONTH_WIDTH = clamp(MONTH_WIDT
 document.getElementById('zoomOut').onclick = ()=>{ MONTH_WIDTH = clamp(MONTH_WIDTH-6, 18, 96); render(); };
 document.getElementById('printBtn').onclick = ()=> printWithCover();
 
-// Phase buttons
 ['All','Planning','Recruitment','Pre-Launch','Launch','Stabilization'].forEach(p=>{
   const id = p==='All' ? 'phaseAll' : `phase${p.replace(/\W/g,'')}`;
   const btn = document.getElementById(id);
@@ -441,12 +434,17 @@ const pieCtx = document.getElementById('opexPie').getContext('2d');
 const budgetSelect = document.getElementById('budgetSelect');
 const budgetNote = document.getElementById('budgetNote');
 
-// values in Lakhs for each scenario (detailed split)
 const OPEX_SCENES = {
   150: { Faculty:80, Infra:30, Marketing:20, Admin:20 },
   160: { Faculty:88, Infra:32, Marketing:22, Admin:18 },
   210: { Faculty:110, Infra:40, Marketing:30, Admin:30 }
 };
+const CHART_COLORS = [
+    getComputedStyle(document.documentElement).getPropertyValue('--green').trim(),
+    getComputedStyle(document.documentElement).getPropertyValue('--blue').trim(),
+    getComputedStyle(document.documentElement).getPropertyValue('--amber').trim(),
+    getComputedStyle(document.documentElement).getPropertyValue('--violet').trim()
+];
 
 function buildOpexData(scene){
   const cat = ['Faculty','Infra','Marketing','Admin'];
@@ -455,7 +453,7 @@ function buildOpexData(scene){
     datasets: [{
       label: `Allocation (₹ Lakhs)`,
       data: cat.map(k=> scene[k]),
-      backgroundColor: ['#10b981','#3b82f6','#f59e0b','#8b5cf6']
+      backgroundColor: CHART_COLORS
     }]
   };
 }
@@ -465,15 +463,15 @@ let opexChart = new Chart(opexCtx, {
   data: buildOpexData(OPEX_SCENES[+budgetSelect.value]),
   options: {
     responsive:true,
-    plugins:{ legend:{ display:false }, title:{ display:true, text:'OPEX Allocation by Category (₹ Lakhs)' } },
-    scales:{ y:{ beginAtZero:true, ticks:{ color:'#cbd5e1' }, grid:{ color:'#1f2937' } }, x:{ ticks:{ color:'#cbd5e1' }, grid:{ color:'#1f2937' } } }
+    plugins:{ legend:{ display:false }, title:{ display:true, text:'OPEX Allocation by Category (₹ Lakhs)', color: '#0d47a1' } },
+    scales:{ y:{ beginAtZero:true, ticks:{ color:'#546e7a' }, grid:{ color:'#e3f2fd' } }, x:{ ticks:{ color:'#546e7a' }, grid:{ color:'#e3f2fd' } } }
   }
 });
 
 let pieChart = new Chart(pieCtx, {
   type:'pie',
-  data: { labels: [], datasets:[{ data:[], backgroundColor:['#10b981','#3b82f6','#f59e0b','#8b5cf6'] }] },
-  options:{ plugins:{ legend:{ position:'bottom' } } }
+  data: { labels: [], datasets:[{ data:[], backgroundColor:CHART_COLORS }] },
+  options:{ plugins:{ legend:{ position:'bottom', labels: {color: '#0d47a1'} } } }
 });
 
 function setBudgetNote(v){ budgetNote.textContent = `Using ₹${v} Lakhs (₹${(v/100).toFixed(2)} Cr) OPEX`; }
@@ -483,23 +481,20 @@ budgetSelect.addEventListener('change', ()=>{
   const v = +budgetSelect.value;
   opexChart.data = buildOpexData(OPEX_SCENES[v]);
   opexChart.update();
-  // update pie
   pieChart.data.labels = Object.keys(OPEX_SCENES[v]);
   pieChart.data.datasets[0].data = Object.values(OPEX_SCENES[v]);
   pieChart.update();
-
   setBudgetNote(v);
-  document.getElementById('fixed').value = v; // sync fixed OPEX for simulator
+  document.getElementById('fixed').value = v;
   updateFinance();
 });
 
-// initialize pie
 pieChart.data.labels = Object.keys(OPEX_SCENES[+budgetSelect.value]);
 pieChart.data.datasets[0].data = Object.values(OPEX_SCENES[+budgetSelect.value]);
 pieChart.update();
 
 // =========================
-// C) FINANCIAL SIMULATOR + Scenario Save/Compare
+// C) FINANCIAL SIMULATOR
 // =========================
 const elStudents = document.getElementById('students');
 const elFee = document.getElementById('fee');
@@ -528,7 +523,6 @@ const studentsWrap = document.getElementById('studentsWrap');
 const finCtx = document.getElementById('finChart');
 let finChart;
 
-// Slots
 let slotA = null, slotB = null;
 const slotAel = document.getElementById('slotA');
 const slotBel = document.getElementById('slotB');
@@ -547,23 +541,23 @@ function updateBreakevenTick(be, min, max){
 }
 
 function computeMetrics(students, fee, varCost, discPct, fixed){
-  const gross = students * fee;                 // Lakhs
+  const gross = students * fee;
   const netFeePerStudent = fee * (1 - discPct/100);
-  const netRevenue = students * netFeePerStudent; // Lakhs
-  const variableTotal = students * varCost;       // Lakhs
-  const totalExpenses = fixed + variableTotal;    // Lakhs
-  const pnl = netRevenue - totalExpenses;         // Lakhs
-  const perStudentContribution = netFeePerStudent - varCost; // Lakhs
+  const netRevenue = students * netFeePerStudent;
+  const variableTotal = students * varCost;
+  const totalExpenses = fixed + variableTotal;
+  const pnl = netRevenue - totalExpenses;
+  const perStudentContribution = netFeePerStudent - varCost;
   let be = 'N/A'; if (perStudentContribution>0) be = Math.ceil(fixed / perStudentContribution);
   return { gross, netRevenue, variableTotal, totalExpenses, pnl, perStudentContribution, be };
 }
 
 function updateFinance(){
   const students = +elStudents.value;
-  const fee = +elFee.value;        // in Lakhs
-  const varCost = +elVar.value;    // in Lakhs
-  const discPct = +elDisc.value;   // percent
-  const fixed = +elFixed.value;    // in Lakhs
+  const fee = +elFee.value;
+  const varCost = +elVar.value;
+  const discPct = +elDisc.value;
+  const fixed = +elFixed.value;
 
   outStudents.textContent = students;
   outFee.textContent = fee.toFixed(2);
@@ -582,21 +576,20 @@ function updateFinance(){
   contrib.textContent = fmtLakhs(m.perStudentContribution);
   headroom.textContent = (m.be==='N/A')? 'N/A' : `${students - m.be} students`;
 
-  // Breakeven Tick
   if (m.be==='N/A'){ beTick.style.display='none'; beTag.style.display='none'; }
   else{ updateBreakevenTick(m.be, +elStudents.min, +elStudents.max); }
 
-  // Chart render
-  const revCr = m.netRevenue/100; // to Cr
+  const revCr = m.netRevenue/100;
   const expCr = m.totalExpenses/100;
   if (finChart) finChart.destroy();
   finChart = new Chart(finCtx, {
     type:'bar',
-    data:{ labels:['Revenue (Cr)','Expenses (Cr)'], datasets:[{ label:'Amount', data:[revCr, expCr], backgroundColor:['#10b981','#f43f5e'] }] },
-    options:{ responsive:true, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true } } }
+    data:{ labels:['Revenue (Cr)','Expenses (Cr)'], datasets:[{ label:'Amount', data:[revCr, expCr], backgroundColor:[CHART_COLORS[0], CHART_COLORS[4] || '#f50057'] }] },
+    options:{ responsive:true, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{color:'#546e7a'}, grid:{color:'#e3f2fd'} }, x:{ ticks:{color:'#546e7a'} } } }
   });
 
-  profit.parentElement.style.borderColor = m.pnl>=0 ? '#14532d' : '#7f1d1d';
+  profit.parentElement.style.borderColor = m.pnl>=0 ? '#c8e6c9' : '#ffcdd2';
+  profit.parentElement.style.background = m.pnl>=0 ? '#e8f5e9' : '#ffebee';
 }
 
 ['input','change'].forEach(evt=>{
@@ -610,7 +603,6 @@ function updateFinance(){
 document.getElementById('fixed').value = +budgetSelect.value; 
 updateFinance();
 
-// ---- Scenario save/compare ----
 function snapshot(){
   return {
     students:+elStudents.value, fee:+elFee.value, varCost:+elVar.value, disc:+elDisc.value, fixed:+elFixed.value
@@ -618,9 +610,9 @@ function snapshot(){
 }
 
 function renderSlot(el, data){
-  if(!data){ el.innerHTML = 'Empty'; return; }
+  if(!data){ el.innerHTML = '<em>Empty</em>'; return; }
   const m = computeMetrics(data.students, data.fee, data.varCost, data.disc, data.fixed);
-  el.innerHTML = `Students: ${data.students}<br/>Fee: ${data.fee} L<br/>Fixed: ${data.fixed} L<br/>Profit: ${fmtLakhs(m.pnl)}`;
+  el.innerHTML = `Students: ${data.students}<br/>Fee: ${data.fee} L<br/>Fixed: ${data.fixed} L<br/><strong>Profit: ${fmtLakhs(m.pnl)}</strong>`;
 }
 
 document.getElementById('saveA').addEventListener('click', ()=>{ slotA = snapshot(); localStorage.setItem('slotA', JSON.stringify(slotA)); renderSlot(slotAel, slotA); });
@@ -628,10 +620,8 @@ document.getElementById('saveB').addEventListener('click', ()=>{ slotB = snapsho
 
 document.getElementById('clearSlots').addEventListener('click', ()=>{ slotA=null; slotB=null; localStorage.removeItem('slotA'); localStorage.removeItem('slotB'); renderSlot(slotAel,null); renderSlot(slotBel,null); });
 
-// load saved slots
 try{ if(localStorage.getItem('slotA')){ slotA=JSON.parse(localStorage.getItem('slotA')); renderSlot(slotAel,slotA); } if(localStorage.getItem('slotB')){ slotB=JSON.parse(localStorage.getItem('slotB')); renderSlot(slotBel,slotB); } }catch(e){}
 
-// compare
 document.getElementById('compareSlots').addEventListener('click', ()=>{
   if(!slotA || !slotB){ alert('Save both Slot A and Slot B before comparing.'); return; }
   const ma = computeMetrics(slotA.students, slotA.fee, slotA.varCost, slotA.disc, slotA.fixed);
@@ -641,16 +631,16 @@ document.getElementById('compareSlots').addEventListener('click', ()=>{
   const cmpWin = window.open('', 'compare', 'width=700,height=420');
   cmpWin.document.write('<html><head><title>Scenario Comparison</title></head><body style="font-family:Arial;padding:12px;background:#fff;color:#111">');
   cmpWin.document.write('<h3>Scenario Comparison</h3>');
-  cmpWin.document.write(`<div style="display:flex;gap:12px"><div style="padding:8px;border:1px solid #ddd">Slot A:<br/>Students:${slotA.students}<br/>Profit:${fmtLakhs(ma.pnl)}</div><div style="padding:8px;border:1px solid #ddd">Slot B:<br/>Students:${slotB.students}<br/>Profit:${fmtLakhs(mb.pnl)}</div></div>`);
+  cmpWin.document.write(`<div style="display:flex;gap:12px"><div style="padding:8px;border:1px solid #ddd; border-radius:8px;"><strong>Slot A:</strong><br/>Students: ${slotA.students}<br/>Profit: ${fmtLakhs(ma.pnl)}</div><div style="padding:8px;border:1px solid #ddd; border-radius:8px;"><strong>Slot B:</strong><br/>Students: ${slotB.students}<br/>Profit: ${fmtLakhs(mb.pnl)}</div></div>`);
   cmpWin.document.write('<canvas id="cmpCanvas" width="640" height="240"></canvas>');
   cmpWin.document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>');
-  cmpWin.document.write(`<script>new Chart(document.getElementById('cmpCanvas'),{type:'bar',data:{labels:${JSON.stringify(labels)},datasets:[{label:'Profit (Cr)',data:${JSON.stringify(data)},backgroundColor:['#10b981','#f59e0b']}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}})<\/script>`);
+  cmpWin.document.write(`<script>new Chart(document.getElementById('cmpCanvas'),{type:'bar',data:{labels:${JSON.stringify(labels)},datasets:[{label:'Profit (Cr)',data:${JSON.stringify(data)},backgroundColor:['#2979ff','#ffab00']}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}})<\/script>`);
   cmpWin.document.write('</body></html>');
   cmpWin.document.close();
 });
 
 // =========================
-// D) NOTES (small modal editor)
+// D) NOTES MODAL
 // =========================
 const noteModal = document.getElementById('noteModal');
 const noteTitle = document.getElementById('noteTitle');
@@ -684,20 +674,17 @@ deleteNoteBtn.addEventListener('click', ()=>{
 closeNoteBtn.addEventListener('click', ()=>{ noteModal.style.display='none'; });
 
 // =========================
-// E) Print with Cover
+// E) PRINTING
 // =========================
 function printWithCover(){
-  // create cover element
   const cover = document.createElement('div');
   cover.id = 'coverPage';
   cover.style.position='fixed';cover.style.left='0';cover.style.top='0';cover.style.width='100%';cover.style.height='100%';cover.style.background='#ffffff';cover.style.zIndex='9999';cover.style.display='flex';cover.style.flexDirection='column';cover.style.alignItems='center';cover.style.justifyContent='center';
-  cover.innerHTML = `<div style="text-align:center;color:#02121f;padding:40px;font-family:Inter,Arial;"><h1 style='color:#02121f'>Medchal Integrated College</h1><p style='color:#02121f;margin-top:6px'>Investor Presentation - Launch Plan (March 2026)</p><p style='margin-top:18px;color:#333'>Prepared on: ${new Date().toLocaleDateString()}</p></div>`;
+  cover.innerHTML = `<div style="text-align:center;color:#0d47a1;padding:40px;font-family:Inter,Arial;"><h1 style='color:#0d47a1; font-size:32px;'>Medchal Integrated College</h1><p style='color:#546e7a;margin-top:6px; font-size: 18px;'>Investor Presentation - Launch Plan (March 2026)</p><p style='margin-top:24px;color:#78909c;'>Prepared on: ${new Date().toLocaleDateString()}</p></div>`;
   document.body.insertBefore(cover, document.body.firstChild);
-  // small timeout to ensure cover renders
   setTimeout(()=>{ window.print(); cover.remove(); }, 500);
 }
 
-// initial render
 render();
 </script>
 </body>
