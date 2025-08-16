@@ -90,7 +90,7 @@
     <section class="panel">
       <div class="section-title">
         <div class="controls">
-          <span class="badge">Timespan: <strong>Aug 2025 → Mar 2027</strong></span>
+          <span class="badge">Timespan: <strong>Mar 2025 → Mar 2027</strong></span>
           <div class="scale">
             <button class="btn secondary" id="zoomOut">−</button>
             <span class="badge" id="scaleLabel">Scale: 36px / month</span>
@@ -249,7 +249,7 @@
 // =========================
 // A) INTERACTIVE GANTT
 // =========================
-const START = new Date(2025, 7, 1); // Aug 1, 2025
+const START = new Date(2025, 2, 1); // Mar 1, 2025
 const END   = new Date(2027, 2, 1); // Mar 1, 2027
 
 const TRACKS = {
@@ -376,8 +376,8 @@ function buildChart(list){
     const color = TRACKS[t.track].color;
     svg += `
       <g class="bar" data-id="${t.id}" data-name="${t.name}" data-owner="${t.owner}" data-start="${fmt(s)}" data-end="${fmt(e)}" data-track="${TRACKS[t.track].label}" data-phase="${t.phase}" data-critical="${t.critical?'Yes':'No'}">
-        <rect x="${x}" y="${y-2}" rx="${r}" ry="${r}" width="${w}" height="${rowH-8}" fill="${color}" />
-        <text x="${x+8}" y="${y+16}" fill="#fff" font-weight="600" font-size="12">${t.name}</text>
+        <rect x="${x}" y="${y}" rx="${r}" ry="${r}" width="${w}" height="${rowH-8}" fill="${color}" />
+        <text x="${x+8}" y="${y+18}" fill="#fff" font-weight="600" font-size="12">${t.name}</text>
       </g>`;
   });
 
