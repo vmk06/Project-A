@@ -1,250 +1,704 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>College Launch Plan Dashboard</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Medchal Integrated College – Launch Control Center (v2)</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f5f7fa;
-      color: #333;
+    :root{
+      --bg:#0b1220;--panel:#111827;--card:#0f172a;--muted:#cbd5e1;--text:#e5e7eb;
+      --accent:#22d3ee;--green:#10b981;--amber:#f59e0b;--rose:#f43f5e;--violet:#8b5cf6;--blue:#3b82f6;
+      --ok:#16a34a;--warn:#f59e0b;--bad:#ef4444;
     }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";background:var(--bg);color:var(--text)}
+    header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,rgba(11,18,32,.9),rgba(11,18,32,.5));backdrop-filter:blur(6px);border-bottom:1px solid #1f2937}
+    .wrap{max-width:1200px;margin:0 auto;padding:16px}
+    h1{font-size:22px;margin:0 0 6px}
+    .sub{color:var(--muted);font-size:13px}
+    .panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:14px;margin:16px 0}
+    .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .badge{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid #334155;background:#0b1220}
+    .btn{background:#0ea5e9;border:0;color:#02121f;padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer}
+    .btn.secondary{background:#111827;color:#cbd5e1;border:1px solid #2a3445}
+    .grid{display:grid;grid-template-columns:260px 1fr;gap:12px}
+    .left{background:var(--card);border:1px solid #1e293b;border-radius:14px;padding:8px}
+    .right{background:var(--card);border:1px solid #1e293b;border-radius:14px;overflow:auto}
+    .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .legend .item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+    .swatch{width:12px;height:12px;border-radius:3px}
+    .row{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px dashed #1f2937}
+    .row:last-child{border-bottom:0}
+    .row small{color:#93a3b8}
+    .sticky-head{position:sticky;top:0;background:#0b1220;border-bottom:1px solid #1f2937;padding:6px 8px;z-index:5}
+    svg{display:block}
+    .tooltip{position:fixed;pointer-events:none;background:#0b1220;border:1px solid #334155;color:#e5e7eb;padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.2;box-shadow:0 8px 20px rgba(0,0,0,.35);opacity:0;transform:translateY(6px);transition:opacity .12s ease, transform .12s ease}
+    .pill{display:inline-block;padding:2px 6px;border-radius:999px;font-size:11px;margin-left:6px;color:#0b1220}
+    .notice{font-size:12px;color:#9fb0c9}
+    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+    .kpi .card{background:#0b1220;border:1px solid #1f2937;border-radius:10px;padding:10px}
+    .kpi .label{font-size:11px;color:#93a3b8}
+    .kpi .value{font-size:18px;font-weight:700}
+    .filter{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+    .filter label{display:flex;align-items:center;gap:6px;font-size:12px;color:#cbd5e1}
+    .scale{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .section-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .canvas-card{background:var(--card);border:1px solid #1e293b;border-radius:14px;padding:14px;margin-top:10px}
 
-    header {
-      background: #2c3e50;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
+    /* Financial Simulator */
+    .sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .sim-controls{display:grid;gap:10px}
+    .field{display:grid;gap:6px}
+    .field label{font-size:12px;color:#cbd5e1}
+    input[type="range"]{width:100%}
+    input[type="number"]{background:#0b1220;border:1px solid #334155;color:#e5e7eb;border-radius:8px;padding:8px}
+    .result{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px}
+    .result .card{background:#0b1220;border:1px solid #1f2937;border-radius:10px;padding:10px}
+    .result .label{font-size:11px;color:#93a3b8}
+    .result .value{font-size:18px;font-weight:700}
+    .range-wrap{position:relative}
+    .breakeven-tick{position:absolute;top:10px;width:2px;height:18px;background:var(--rose);transform:translateX(-1px)}
+    .breakeven-tag{position:absolute;top:-10px;font-size:10px;color:var(--rose);transform:translateX(-50%)}
+    .slot-row{display:flex;gap:8px;margin-top:10px}
+    .slot{background:#0b1220;border:1px solid #262f3a;padding:8px;border-radius:8px}
+    .note-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#0b1220;border:1px solid #334155;padding:12px;border-radius:10px;z-index:40;width:420px}
+    .note-modal textarea{width:100%;height:120px;background:#071021;color:#e5e7eb;border:1px solid #24303a;padding:8px;border-radius:6px}
+    .note-icon{font-size:12px;color:#f59e0b;margin-left:8px}
+    canvas{max-width:100%}
 
-    h1, h2, h3 {
-      margin: 0 0 10px;
-    }
-
-    section {
-      margin: 30px auto;
-      padding: 20px;
-      width: 90%;
-      max-width: 1200px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
-    .chart-container {
-      position: relative;
-      height: 400px;
-      width: 100%;
-      margin-top: 20px;
-    }
-
-    .slider-container {
-      margin-top: 20px;
-    }
-    .slider-container label {
-      font-weight: bold;
-    }
-    .slider-container input {
-      width: 100%;
-    }
-    .results {
-      margin-top: 15px;
-      font-size: 1.1em;
-      background: #f1f1f1;
-      padding: 10px;
-      border-radius: 6px;
-    }
-
-    .breakeven-marker {
-      font-weight: bold;
-      color: #c0392b;
+    @media (max-width:900px){
+      .grid{grid-template-columns:1fr}
+      .sim-grid{grid-template-columns:1fr}
+      .result{grid-template-columns:repeat(2,1fr)}
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>College Launch Plan Dashboard</h1>
-    <p>Medchal Integrated College – Launching March 2026</p>
+    <div class="wrap">
+      <h1>Interactive Gantt & Financials – Integrated Intermediate College (Medchal)</h1>
+      <div class="sub">Launch <strong>March 2026</strong> • Target <strong>200 students (Y1)</strong> • Tracks: Approvals, Infrastructure, Academics, Hiring, Marketing, Admissions</div>
+    </div>
   </header>
 
-  <!-- Gantt-Style Timeline -->
-  <section>
-    <h2>📅 Launch Timeline</h2>
-    <canvas id="timelineChart"></canvas>
-  </section>
+  <main class="wrap">
+    <!-- ========== SECTION A: INTERACTIVE GANTT ========= -->
+    <section class="panel">
+      <div class="section-title">
+        <div class="controls">
+          <span class="badge">Timespan: <strong>Mar 2025 → Mar 2027</strong></span>
+          <div class="scale">
+            <button class="btn secondary" id="zoomOut">−</button>
+            <span class="badge" id="scaleLabel">Scale: 36px / month</span>
+            <button class="btn secondary" id="zoomIn">+</button>
+          </div>
+          <button class="btn" id="printBtn">Print / Save PDF</button>
+        </div>
+        <div>
+          <div style="margin-top:8px">
+            <label class="badge">Phase Filter:</label>
+            <button class="btn secondary" id="phaseAll">All</button>
+            <button class="btn secondary" id="phasePlanning">Planning</button>
+            <button class="btn secondary" id="phaseRecruit">Recruitment</button>
+            <button class="btn secondary" id="phasePrelaunch">Pre‑Launch</button>
+            <button class="btn secondary" id="phaseLaunch">Launch</button>
+            <button class="btn secondary" id="phaseStab">Stabilization</button>
+          </div>
+        </div>
+      </div>
 
-  <!-- OPEX vs Budget -->
-  <section>
-    <h2>💰 OPEX Comparison</h2>
-    <p>Comparing budget allocation between conservative (₹1.5–1.6 Cr) and expanded (₹2.1 Cr) scenarios.</p>
-    <div class="chart-container">
-      <canvas id="opexChart"></canvas>
+      <div class="legend">
+        <div class="item"><span class="swatch" style="background:var(--accent)"></span> Approvals & Compliance</div>
+        <div class="item"><span class="swatch" style="background:var(--blue)"></span> Infrastructure</div>
+        <div class="item"><span class="swatch" style="background:var(--green)"></span> Academics & Content</div>
+        <div class="item"><span class="swatch" style="background:var(--amber)"></span> Hiring & Training</div>
+        <div class="item"><span class="swatch" style="background:var(--rose)"></span> Marketing & Admissions</div>
+      </div>
+
+      <div class="filter" id="filters"></div>
+      <div class="kpi">
+        <div class="card"><div class="label">Total Tasks</div><div class="value" id="kpiTasks">–</div></div>
+        <div class="card"><div class="label">Open Now</div><div class="value" id="kpiOpen">–</div></div>
+        <div class="card"><div class="label">Critical (Launch‑blocking)</div><div class="value" id="kpiCritical">–</div></div>
+        <div class="card"><div class="label">On‑time Probability</div><div class="value" id="kpiOTP">–</div></div>
+      </div>
+
+      <section class="grid" id="ganttGrid">
+        <aside class="left">
+          <div class="sticky-head">Tasks</div>
+          <div id="taskList"></div>
+        </aside>
+        <section class="right">
+          <div class="sticky-head" id="timelineHead"></div>
+          <div id="chart"></div>
+        </section>
+      </section>
+
+      <p class="notice">Tip: Use the filters to focus on a specific track; zoom to adjust month width. Click a task to add/view notes. Print to save as PDF for investor updates.</p>
+    </section>
+
+    <!-- ========== SECTION B: OPEX vs BUDGET ========= -->
+    <section class="panel">
+      <div class="section-title">
+        <h2 style="margin:0;font-size:18px">OPEX Allocation – Scenario Comparison</h2>
+        <div class="controls">
+          <label class="badge">Select Budget:
+            <select id="budgetSelect" style="margin-left:6px;background:#0b1220;color:#e5e7eb;border:1px solid #334155;border-radius:8px;padding:6px">
+              <option value="150">₹1.5 Cr</option>
+              <option value="160">₹1.6 Cr</option>
+              <option value="210" selected>₹2.1 Cr</option>
+            </select>
+          </label>
+          <span class="badge" id="budgetNote">Using ₹2.1 Cr OPEX</span>
+        </div>
+      </div>
+      <div class="canvas-card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1"><canvas id="opexChart" height="160"></canvas></div>
+        <div style="width:320px"><canvas id="opexPie" height="160"></canvas></div>
+      </div>
+      <p class="notice">Values shown in <strong>₹ Lakhs</strong>. Changing budget updates the Financial Simulator's fixed expenses automatically.</p>
+    </section>
+
+    <!-- ========== SECTION C: FINANCIAL SIMULATOR ========= -->
+    <section class="panel">
+      <div class="section-title">
+        <h2 style="margin:0;font-size:18px">Intake, Fees & Breakeven Simulator</h2>
+      </div>
+
+      <div class="sim-grid">
+        <div class="sim-controls">
+          <div class="field">
+            <label>Students</label>
+            <div class="range-wrap" id="studentsWrap">
+              <input type="range" id="students" min="150" max="300" step="10" value="200" />
+              <div class="breakeven-tick" id="beTick" style="display:none"></div>
+              <div class="breakeven-tag" id="beTag" style="display:none">BREAKEVEN</div>
+            </div>
+            <div class="badge" id="studentsVal">200</div>
+          </div>
+          <div class="field">
+            <label>Fee per Student (₹ Lakhs)</label>
+            <input type="range" id="fee" min="1" max="2.5" step="0.05" value="1.20" />
+            <div class="badge" id="feeVal">1.20</div>
+          </div>
+          <div class="field">
+            <label>Variable Cost per Student (₹ Lakhs) — test series, transport subsidy, etc.</label>
+            <input type="range" id="varCost" min="0.10" max="0.40" step="0.01" value="0.20" />
+            <div class="badge" id="varVal">0.20</div>
+          </div>
+          <div class="field">
+            <label>Scholarship / Discount (%)</label>
+            <input type="range" id="disc" min="0" max="25" step="1" value="5" />
+            <div class="badge" id="discVal">5%</div>
+          </div>
+          <div class="field">
+            <label>Fixed Expenses (OPEX in ₹ Lakhs) — driven by budget above</label>
+            <input type="number" id="fixed" value="210" />
+          </div>
+
+          <div style="margin-top:10px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn" id="saveA">Save to Slot A</button>
+              <button class="btn" id="saveB">Save to Slot B</button>
+              <button class="btn" id="compareSlots">Compare Slots</button>
+              <button class="btn secondary" id="clearSlots">Clear Slots</button>
+            </div>
+            <div class="slot-row">
+              <div class="slot" id="slotA">Slot A: <em>empty</em></div>
+              <div class="slot" id="slotB">Slot B: <em>empty</em></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas-card">
+          <canvas id="finChart" height="160"></canvas>
+          <div class="result">
+            <div class="card"><div class="label">Gross Revenue</div><div class="value" id="revGross">–</div></div>
+            <div class="card"><div class="label">Net Revenue (after discount)</div><div class="value" id="revNet">–</div></div>
+            <div class="card"><div class="label">Total Expenses</div><div class="value" id="expTotal">–</div></div>
+            <div class="card"><div class="label">Profit / (Loss)</div><div class="value" id="profit">–</div></div>
+            <div class="card"><div class="label">Profit Margin</div><div class="value" id="margin">–</div></div>
+            <div class="card"><div class="label">Breakeven Students</div><div class="value" id="beStudents">–</div></div>
+            <div class="card"><div class="label">Per-student Contribution</div><div class="value" id="contrib">–</div></div>
+            <div class="card"><div class="label">Headroom vs Breakeven</div><div class="value" id="headroom">–</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="notice">All financials in <strong>₹ Lakhs</strong> unless specified. 100 Lakhs = ₹1 Cr.</p>
+  </main>
+
+  <div class="tooltip" id="tooltip"></div>
+
+  <!-- Note Modal -->
+  <div id="noteModal" class="note-modal" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <strong id="noteTitle">Task Note</strong>
+      <button id="closeNote" class="btn secondary">Close</button>
     </div>
-  </section>
-
-  <!-- Financial Simulator -->
-  <section>
-    <h2>📊 Student Intake Financial Simulator</h2>
-    <p>Adjust the slider to simulate fee revenue vs operating expenses.</p>
-
-    <div class="slider-container">
-      <label for="students">Number of Students: <span id="studentCount">200</span></label>
-      <input type="range" id="students" min="50" max="400" step="10" value="200">
+    <textarea id="noteText" placeholder="Write notes for this task (e.g., vendor contact, delay reason)"></textarea>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+      <button id="saveNote" class="btn">Save Note</button>
+      <button id="deleteNote" class="btn secondary">Delete</button>
     </div>
+  </div>
 
-    <div class="slider-container">
-      <label for="fee">Fee per Student (₹ Lakhs): <span id="feeValue">1.5</span></label>
-      <input type="range" id="fee" min="1" max="3" step="0.1" value="1.5">
-    </div>
+<script>
+// =========================
+// A) INTERACTIVE GANTT
+// =========================
+const START = new Date(2025, 2, 1); // Mar 1, 2025
+const END   = new Date(2027, 2, 1); // Mar 1, 2027
 
-    <div class="results">
-      <p>Revenue: ₹<span id="revenue">3.0</span> Cr</p>
-      <p>Expenses (OPEX): ₹<span id="expenses">1.5</span> Cr</p>
-      <p>Net Balance: <span id="netBalance">+₹1.5 Cr</span></p>
-      <p class="breakeven-marker" id="breakevenNote"></p>
-    </div>
+const TRACKS = {
+  approvals:   { label: 'Approvals & Compliance', color: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() },
+  infra:       { label: 'Infrastructure',          color: getComputedStyle(document.documentElement).getPropertyValue('--blue').trim() },
+  academics:   { label: 'Academics & Content',     color: getComputedStyle(document.documentElement).getPropertyValue('--green').trim() },
+  hiring:      { label: 'Hiring & Training',       color: getComputedStyle(document.documentElement).getPropertyValue('--amber').trim() },
+  marketing:   { label: 'Marketing & Admissions',  color: getComputedStyle(document.documentElement).getPropertyValue('--rose').trim() },
+};
 
-    <div class="chart-container">
-      <canvas id="financeChart"></canvas>
-    </div>
-  </section>
+// Tasks now include a 'phase' property (Planning / Recruitment / Pre-Launch / Launch / Stabilization)
+const TASKS = [
+  { id:'aff1', name:'Legal entity & compliance framework', owner:'Admin Head', start:'2025-03-01', end:'2025-04-15', track:'approvals', critical:true, phase:'Planning' },
+  { id:'aff2', name:'Telangana Board Affiliation – application & inspections', owner:'Principal', start:'2025-04-10', end:'2025-08-31', track:'approvals', critical:true, phase:'Planning' },
+  { id:'aff3', name:'Safety & fire NOC, lab compliance', owner:'Admin Head', start:'2025-06-01', end:'2025-08-15', track:'approvals', critical:true, phase:'Planning' },
 
-  <script>
-    // ========== Gantt-Style Timeline ==========
-    const timelineCtx = document.getElementById('timelineChart');
-    new Chart(timelineCtx, {
-      type: 'bar',
-      data: {
-        labels: [
-          'Site Preparation',
-          'Faculty Recruitment',
-          'Marketing Campaign',
-          'Admissions',
-          'Training & Orientation',
-          'Academic Launch'
-        ],
-        datasets: [{
-          label: 'Timeline (months)',
-          data: [2, 3, 4, 3, 2, 1],
-          backgroundColor: '#3498db'
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          title: {
-            display: true,
-            text: 'College Launch Activities Duration'
-          }
-        }
-      }
+  { id:'inf1', name:'Campus lease & layout finalization (Medchal)', owner:'Founder', start:'2025-03-15', end:'2025-04-30', track:'infra', critical:true, phase:'Planning' },
+  { id:'inf2', name:'Civil fit‑out (classrooms, labs, library)', owner:'Vendor', start:'2025-05-01', end:'2025-11-15', track:'infra', critical:true, phase:'Planning' },
+  { id:'inf3', name:'Furniture & smart‑class install', owner:'Vendor', start:'2025-09-01', end:'2025-12-10', track:'infra', critical:false, phase:'Pre-Launch' },
+  { id:'inf4', name:'IT / LMS / EDP setup & testing', owner:'IT Lead', start:'2025-12-01', end:'2026-01-20', track:'infra', critical:true, phase:'Pre-Launch' },
+
+  { id:'ac1', name:'Recruit core faculty (PCM + Bio)', owner:'Founder', start:'2025-09-01', end:'2025-10-15', track:'academics', critical:true, phase:'Recruitment' },
+  { id:'ac2', name:'Syllabus mapping (Boards + JEE/NEET) & timetable', owner:'Academic Coord.', start:'2025-10-01', end:'2025-11-15', track:'academics', critical:true, phase:'Recruitment' },
+  { id:'ac3', name:'Content: Notes, DPPs, Test Series (Y1 set)', owner:'HODs', start:'2025-10-15', end:'2026-01-15', track:'academics', critical:true, phase:'Pre-Launch' },
+  { id:'ac4', name:'Faculty induction & pedagogy workshops', owner:'Principal', start:'2025-11-20', end:'2026-01-10', track:'academics', critical:false, phase:'Pre-Launch' },
+
+  { id:'hr1', name:'Ops/Admin hiring (Admin + Accounts + Frontdesk)', owner:'Admin Head', start:'2025-12-01', end:'2026-01-05', track:'hiring', critical:true, phase:'Recruitment' },
+  { id:'hr2', name:'Sales team hiring (1 counselor + 1 field exec)', owner:'Admissions', start:'2026-01-01', end:'2026-01-20', track:'hiring', critical:true, phase:'Pre-Launch' },
+  { id:'hr3', name:'Support staff onboarding (outsourced)', owner:'Admin', start:'2026-02-01', end:'2026-02-20', track:'hiring', critical:false, phase:'Pre-Launch' },
+
+  { id:'mk1', name:'Branding, website & creatives', owner:'Mktg', start:'2025-10-15', end:'2025-12-10', track:'marketing', critical:false, phase:'Pre-Launch' },
+  { id:'mk2', name:'Admission test campaign (digital‑first)', owner:'Mktg', start:'2026-01-05', end:'2026-02-28', track:'marketing', critical:true, phase:'Launch' },
+  { id:'mk3', name:'School outreach & seminars', owner:'Field Exec', start:'2026-01-10', end:'2026-02-25', track:'marketing', critical:true, phase:'Launch' },
+  { id:'mk4', name:'Orientation & batch launch (200 seats)', owner:'Principal', start:'2026-03-01', end:'2026-03-07', track:'marketing', critical:true, phase:'Launch' },
+
+  { id:'yz1', name:'Feedback loop & schedule optimization', owner:'Academic Coord.', start:'2026-04-01', end:'2026-06-30', track:'academics', critical:false, phase:'Stabilization' },
+  { id:'yz2', name:'Year‑2 admissions cycle prep', owner:'Admissions', start:'2026-09-01', end:'2026-12-31', track:'marketing', critical:false, phase:'Stabilization' },
+  { id:'yz3', name:'Add librarian + admin (Y2)', owner:'Admin', start:'2026-09-15', end:'2026-10-15', track:'hiring', critical:false, phase:'Stabilization' },
+];
+
+let MONTH_WIDTH = 36; // px per month (zoomable)
+let filters = new Set(Object.keys(TRACKS));
+let phaseFilter = 'All';
+
+const msPerDay = 24*3600*1000;
+function monthDiff(a,b){ return (b.getFullYear()-a.getFullYear())*12 + (b.getMonth()-a.getMonth()); }
+function toDate(str){ const [y,m,d]=str.split('-').map(Number); return new Date(y, m-1, d||1); }
+function clamp(v,min,max){ return Math.max(min, Math.min(max,v)); }
+function xFromDate(date){ const m = monthDiff(START, date); return m*MONTH_WIDTH; }
+function widthFromRange(s,e){ const md = monthDiff(s,e)+1; return md*MONTH_WIDTH - 6; }
+function fmt(d){ return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'2-digit'}); }
+
+// Notes storage (persist in localStorage)
+const NOTES_KEY = 'projectA_task_notes_v1';
+let notes = {};
+try{ notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}'); }catch(e){ notes = {}; }
+
+const taskListEl = document.getElementById('taskList');
+const chartEl = document.getElementById('chart');
+const headEl = document.getElementById('timelineHead');
+const tooltip = document.getElementById('tooltip');
+const filtersEl = document.getElementById('filters');
+const kpiTasks = document.getElementById('kpiTasks');
+const kpiOpen = document.getElementById('kpiOpen');
+const kpiCritical = document.getElementById('kpiCritical');
+const kpiOTP = document.getElementById('kpiOTP');
+const scaleLabel = document.getElementById('scaleLabel');
+
+function buildFilters(){
+  filtersEl.innerHTML = '';
+  Object.entries(TRACKS).forEach(([k,v])=>{
+    const id = `f_${k}`;
+    const lbl = document.createElement('label');
+    lbl.innerHTML = `<input type="checkbox" id="${id}" checked> ${v.label}`;
+    lbl.querySelector('input').addEventListener('change', (e)=>{ if(e.target.checked) filters.add(k); else filters.delete(k); render(); });
+    filtersEl.appendChild(lbl);
+  });
+}
+
+function buildLeft(list){
+  taskListEl.innerHTML='';
+  list.forEach(t=>{
+    const row = document.createElement('div');
+    row.className='row';
+    const pillColor = TRACKS[t.track].color;
+    const noteMark = notes[t.id] ? `<span class="note-icon">📝</span>` : '';
+    row.innerHTML = `<div style="flex:1">
+      <div style="display:flex;align-items:center;justify-content:space-between"><div>${t.name}${t.critical?`<span class="pill" style="background:${pillColor};">Critical</span>`:''}</div><div>${noteMark}</div></div>
+      <small>${t.owner} · ${t.phase}</small>
+    </div>`;
+    row.addEventListener('click', ()=> openNoteEditor(t.id, t.name));
+    taskListEl.appendChild(row);
+  });
+}
+
+function buildHead(){
+  const months = monthDiff(START, END)+1;
+  const svgW = months*MONTH_WIDTH + 40;
+  const h = 40; let x=0; const y=0;
+  let svg = `<svg width="${svgW}" height="${h}">`;
+  for(let i=0;i<months;i++){
+    const dt = new Date(START.getFullYear(), START.getMonth()+i, 1);
+    const label = dt.toLocaleDateString(undefined,{year:'2-digit',month:'short'});
+    svg += `<g transform="translate(${x},${y})">
+      <rect x="0" y="0" width="${MONTH_WIDTH}" height="${h}" fill="transparent" stroke="#1f2937" />
+      <text x="${MONTH_WIDTH/2}" y="24" fill="#cbd5e1" font-size="12" text-anchor="middle">${label}</text>
+    </g>`;
+    x+=MONTH_WIDTH;
+  }
+  svg += `</svg>`;
+  headEl.innerHTML = svg;
+}
+
+function buildChart(list){
+  const rowH = 32, gap=8; const totalH = list.length*(rowH+gap)+20;
+  const months = monthDiff(START, END)+1;
+  const svgW = months*MONTH_WIDTH + 40;
+  let svg = `<svg width="${svgW}" height="${totalH}">`;
+
+  for(let i=0;i<list.length;i++){
+    const y = i*(rowH+gap)+4;
+    svg += `<rect x="0" y="${y}" width="${svgW}" height="${rowH}" fill="transparent" stroke="#0f172a"/>`;
+  }
+
+  list.forEach((t,idx)=>{
+    const s = toDate(t.start), e = toDate(t.end);
+    const x = xFromDate(s)+3; const w = clamp(widthFromRange(s,e), 12, 20000);
+    const y = idx*(rowH+gap)+8; const r=6;
+    const color = TRACKS[t.track].color; const darker = '#0b1220';
+    svg += `
+      <g class="bar" data-id="${t.id}" data-name="${t.name}" data-owner="${t.owner}" data-start="${fmt(s)}" data-end="${fmt(e)}" data-track="${TRACKS[t.track].label}" data-phase="${t.phase}" data-critical="${t.critical?'Yes':'No'}">
+        <rect x="${x}" y="${y}" rx="${r}" ry="${r}" width="${w}" height="${rowH-8}" fill="${color}" opacity="0.95" />
+        <rect x="${x}" y="${y}" rx="${r}" ry="${r}" width="${w}" height="${rowH-8}" fill="${darker}" opacity="0.12" />
+        <text x="${x+8}" y="${y+18}" fill="#06131e" font-weight="700" font-size="12">${t.name}</text>
+      </g>`;
+  });
+
+  svg += `</svg>`;
+  chartEl.innerHTML = svg;
+
+  chartEl.querySelectorAll('.bar').forEach(el=>{
+    el.addEventListener('mousemove', (e)=>{
+      const ds = el.dataset;
+      tooltip.innerHTML = `<strong>${ds.name}</strong><br>${ds.track} · ${ds.phase} · Owner: ${ds.owner}<br>${ds.start} → ${ds.end}${ds.critical==='Yes'?' · <em>Critical</em>':''}`;
+      tooltip.style.left = (e.clientX+12)+'px';
+      tooltip.style.top  = (e.clientY+12)+'px';
+      tooltip.style.opacity = 1; tooltip.style.transform='translateY(0)';
     });
+    el.addEventListener('mouseleave', ()=>{ tooltip.style.opacity = 0; tooltip.style.transform='translateY(6px)'; });
+    el.addEventListener('click', ()=> openNoteEditor(el.dataset.id, el.dataset.name));
+  });
+}
 
-    // ========== OPEX Comparison ==========
-    const opexCtx = document.getElementById('opexChart');
-    new Chart(opexCtx, {
-      type: 'bar',
-      data: {
-        labels: ['Faculty Salaries', 'Infrastructure', 'Marketing', 'Operations'],
-        datasets: [
-          {
-            label: '₹1.5 Cr Plan',
-            data: [70, 40, 25, 15],
-            backgroundColor: '#2ecc71'
-          },
-          {
-            label: '₹2.1 Cr Plan',
-            data: [95, 55, 35, 25],
-            backgroundColor: '#e67e22'
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          title: {
-            display: true,
-            text: 'OPEX Allocation (₹ Lakhs)'
-          }
-        },
-        scales: {
-          y: { beginAtZero: true }
-        }
-      }
-    });
+function computeKPIs(list){
+  kpiTasks.textContent = list.length;
+  const now = new Date();
+  const open = list.filter(t=> toDate(t.start) <= now && now <= toDate(t.end)).length; kpiOpen.textContent = open;
+  const critical = list.filter(t=> t.critical).length; kpiCritical.textContent = critical;
+  const remainingCritical = list.filter(t=> t.critical && toDate(t.end) > now).length;
+  const otp = clamp(100 - Math.round((remainingCritical/Math.max(critical,1))*40), 40, 98);
+  kpiOTP.textContent = otp + '%';
+}
 
-    // ========== Financial Simulator ==========
-    const studentSlider = document.getElementById('students');
-    const feeSlider = document.getElementById('fee');
-    const studentCount = document.getElementById('studentCount');
-    const feeValue = document.getElementById('feeValue');
-    const revenueSpan = document.getElementById('revenue');
-    const expensesSpan = document.getElementById('expenses');
-    const netBalanceSpan = document.getElementById('netBalance');
-    const breakevenNote = document.getElementById('breakevenNote');
-    const financeCtx = document.getElementById('financeChart');
+function render(){
+  const list = TASKS.filter(t=> filters.has(t.track));
+  const phaseFiltered = list.filter(t=> phaseFilter==='All' ? true : t.phase===phaseFilter);
+  buildLeft(phaseFiltered); buildHead(); buildChart(phaseFiltered); computeKPIs(phaseFiltered);
+  scaleLabel.textContent = `Scale: ${MONTH_WIDTH}px / month`;
+}
 
-    const opex = 1.5; // Fixed OPEX in Cr
-    let financeChart;
+buildFilters(); render();
 
-    function updateFinance() {
-      const students = parseInt(studentSlider.value);
-      const fee = parseFloat(feeSlider.value);
-      const revenue = (students * fee) / 100; // converting lakhs into Cr (100 students * 1 lakh = 1 Cr)
+document.getElementById('zoomIn').onclick = ()=>{ MONTH_WIDTH = clamp(MONTH_WIDTH+6, 18, 96); render(); };
+document.getElementById('zoomOut').onclick = ()=>{ MONTH_WIDTH = clamp(MONTH_WIDTH-6, 18, 96); render(); };
+document.getElementById('printBtn').onclick = ()=> printWithCover();
 
-      const net = revenue - opex;
+// Phase buttons
+['All','Planning','Recruitment','Pre-Launch','Launch','Stabilization'].forEach(p=>{
+  const id = p==='All' ? 'phaseAll' : `phase${p.replace(/\W/g,'')}`;
+  const btn = document.getElementById(id);
+  if(btn){ btn.addEventListener('click', ()=>{ phaseFilter = p==='All'?'All':p; render(); }); }
+});
 
-      // Update UI
-      studentCount.innerText = students;
-      feeValue.innerText = fee.toFixed(1);
-      revenueSpan.innerText = revenue.toFixed(1);
-      expensesSpan.innerText = opex.toFixed(1);
-      netBalanceSpan.innerText = `${net >= 0 ? '+' : ''}₹${net.toFixed(1)} Cr`;
+// =========================
+// B) OPEX vs BUDGET (Chart.js)
+// =========================
+const opexCtx = document.getElementById('opexChart');
+const pieCtx = document.getElementById('opexPie').getContext('2d');
+const budgetSelect = document.getElementById('budgetSelect');
+const budgetNote = document.getElementById('budgetNote');
 
-      // Breakeven calculation
-      const breakevenStudents = Math.ceil((opex * 100) / fee);
-      if (students < breakevenStudents) {
-        breakevenNote.innerText = `❌ Breakeven requires at least ${breakevenStudents} students at ₹${fee.toFixed(1)} Lakh fee.`;
-      } else {
-        breakevenNote.innerText = `✅ Breakeven achieved at ${breakevenStudents} students. Current: ${students}`;
-      }
+// values in Lakhs for each scenario (detailed split)
+const OPEX_SCENES = {
+  150: { Faculty:80, Infra:30, Marketing:20, Admin:20 },
+  160: { Faculty:88, Infra:32, Marketing:22, Admin:18 },
+  210: { Faculty:110, Infra:40, Marketing:30, Admin:30 }
+};
 
-      // Update finance chart
-      if (financeChart) financeChart.destroy();
-      financeChart = new Chart(financeCtx, {
-        type: 'bar',
-        data: {
-          labels: ['Revenue', 'Expenses'],
-          datasets: [{
-            label: '₹ Cr',
-            data: [revenue, opex],
-            backgroundColor: ['#27ae60', '#c0392b']
-          }]
-        },
-        options: {
-          plugins: {
-            title: {
-              display: true,
-              text: 'Revenue vs Expenses'
-            }
-          },
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
-      });
-    }
+function buildOpexData(scene){
+  const cat = ['Faculty','Infra','Marketing','Admin'];
+  return {
+    labels: cat,
+    datasets: [{
+      label: `Allocation (₹ Lakhs)`,
+      data: cat.map(k=> scene[k]),
+      backgroundColor: ['#10b981','#3b82f6','#f59e0b','#8b5cf6']
+    }]
+  };
+}
 
-    // Initialize
-    studentSlider.addEventListener('input', updateFinance);
-    feeSlider.addEventListener('input', updateFinance);
-    updateFinance();
-  </script>
+let opexChart = new Chart(opexCtx, {
+  type: 'bar',
+  data: buildOpexData(OPEX_SCENES[+budgetSelect.value]),
+  options: {
+    responsive:true,
+    plugins:{ legend:{ display:false }, title:{ display:true, text:'OPEX Allocation by Category (₹ Lakhs)' } },
+    scales:{ y:{ beginAtZero:true, ticks:{ color:'#cbd5e1' }, grid:{ color:'#1f2937' } }, x:{ ticks:{ color:'#cbd5e1' }, grid:{ color:'#1f2937' } } }
+  }
+});
+
+let pieChart = new Chart(pieCtx, {
+  type:'pie',
+  data: { labels: [], datasets:[{ data:[], backgroundColor:['#10b981','#3b82f6','#f59e0b','#8b5cf6'] }] },
+  options:{ plugins:{ legend:{ position:'bottom' } } }
+});
+
+function setBudgetNote(v){ budgetNote.textContent = `Using ₹${v} Lakhs (₹${(v/100).toFixed(2)} Cr) OPEX`; }
+setBudgetNote(+budgetSelect.value);
+
+budgetSelect.addEventListener('change', ()=>{
+  const v = +budgetSelect.value;
+  opexChart.data = buildOpexData(OPEX_SCENES[v]);
+  opexChart.update();
+  // update pie
+  pieChart.data.labels = Object.keys(OPEX_SCENES[v]);
+  pieChart.data.datasets[0].data = Object.values(OPEX_SCENES[v]);
+  pieChart.update();
+
+  setBudgetNote(v);
+  document.getElementById('fixed').value = v; // sync fixed OPEX for simulator
+  updateFinance();
+});
+
+// initialize pie
+pieChart.data.labels = Object.keys(OPEX_SCENES[+budgetSelect.value]);
+pieChart.data.datasets[0].data = Object.values(OPEX_SCENES[+budgetSelect.value]);
+pieChart.update();
+
+// =========================
+// C) FINANCIAL SIMULATOR + Scenario Save/Compare
+// =========================
+const elStudents = document.getElementById('students');
+const elFee = document.getElementById('fee');
+const elVar = document.getElementById('varCost');
+const elDisc = document.getElementById('disc');
+const elFixed = document.getElementById('fixed');
+
+const outStudents = document.getElementById('studentsVal');
+const outFee = document.getElementById('feeVal');
+const outVar = document.getElementById('varVal');
+const outDisc = document.getElementById('discVal');
+
+const revGross = document.getElementById('revGross');
+const revNet = document.getElementById('revNet');
+const expTotal = document.getElementById('expTotal');
+const profit = document.getElementById('profit');
+const margin = document.getElementById('margin');
+const beStudents = document.getElementById('beStudents');
+const contrib = document.getElementById('contrib');
+const headroom = document.getElementById('headroom');
+
+const beTick = document.getElementById('beTick');
+const beTag = document.getElementById('beTag');
+const studentsWrap = document.getElementById('studentsWrap');
+
+const finCtx = document.getElementById('finChart');
+let finChart;
+
+// Slots
+let slotA = null, slotB = null;
+const slotAel = document.getElementById('slotA');
+const slotBel = document.getElementById('slotB');
+
+function fmtLakhs(n){ return `₹ ${n.toLocaleString('en-IN', { maximumFractionDigits: 2 })} L`; }
+function fmtCr(n){ return `₹ ${(n/100).toFixed(2)} Cr`; }
+
+function updateBreakevenTick(be, min, max){
+  const pct = (be - min) / (max - min);
+  const rel = pct * elStudents.offsetWidth;
+  beTick.style.left = rel + 'px';
+  beTag.style.left = rel + 'px';
+  beTick.style.display = 'block';
+  beTag.style.display = 'block';
+  beTag.textContent = `BREAKEVEN (${be})`;
+}
+
+function computeMetrics(students, fee, varCost, discPct, fixed){
+  const gross = students * fee;                 // Lakhs
+  const netFeePerStudent = fee * (1 - discPct/100);
+  const netRevenue = students * netFeePerStudent; // Lakhs
+  const variableTotal = students * varCost;       // Lakhs
+  const totalExpenses = fixed + variableTotal;    // Lakhs
+  const pnl = netRevenue - totalExpenses;         // Lakhs
+  const perStudentContribution = netFeePerStudent - varCost; // Lakhs
+  let be = 'N/A'; if (perStudentContribution>0) be = Math.ceil(fixed / perStudentContribution);
+  return { gross, netRevenue, variableTotal, totalExpenses, pnl, perStudentContribution, be };
+}
+
+function updateFinance(){
+  const students = +elStudents.value;
+  const fee = +elFee.value;        // in Lakhs
+  const varCost = +elVar.value;    // in Lakhs
+  const discPct = +elDisc.value;   // percent
+  const fixed = +elFixed.value;    // in Lakhs
+
+  outStudents.textContent = students;
+  outFee.textContent = fee.toFixed(2);
+  outVar.textContent = varCost.toFixed(2);
+  outDisc.textContent = discPct + '%';
+
+  const m = computeMetrics(students, fee, varCost, discPct, fixed);
+
+  revGross.textContent = fmtLakhs(m.gross) + ` (${fmtCr(m.gross)})`;
+  revNet.textContent   = fmtLakhs(m.netRevenue) + ` (${fmtCr(m.netRevenue)})`;
+  expTotal.textContent = fmtLakhs(m.totalExpenses) + ` (${fmtCr(m.totalExpenses)})`;
+  profit.textContent   = fmtLakhs(m.pnl) + ` (${fmtCr(m.pnl)})`;
+  const marginPct = m.netRevenue>0 ? ((m.pnl/m.netRevenue)*100).toFixed(1)+'%' : '–';
+  margin.textContent = marginPct;
+  beStudents.textContent = (m.be==='N/A')? 'N/A' : `${m.be} students`;
+  contrib.textContent = fmtLakhs(m.perStudentContribution);
+  headroom.textContent = (m.be==='N/A')? 'N/A' : `${students - m.be} students`;
+
+  // Breakeven Tick
+  if (m.be==='N/A'){ beTick.style.display='none'; beTag.style.display='none'; }
+  else{ updateBreakevenTick(m.be, +elStudents.min, +elStudents.max); }
+
+  // Chart render
+  const revCr = m.netRevenue/100; // to Cr
+  const expCr = m.totalExpenses/100;
+  if (finChart) finChart.destroy();
+  finChart = new Chart(finCtx, {
+    type:'bar',
+    data:{ labels:['Revenue (Cr)','Expenses (Cr)'], datasets:[{ label:'Amount', data:[revCr, expCr], backgroundColor:['#10b981','#f43f5e'] }] },
+    options:{ responsive:true, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true } } }
+  });
+
+  profit.parentElement.style.borderColor = m.pnl>=0 ? '#14532d' : '#7f1d1d';
+}
+
+['input','change'].forEach(evt=>{
+  elStudents.addEventListener(evt, updateFinance);
+  elFee.addEventListener(evt, updateFinance);
+  elVar.addEventListener(evt, updateFinance);
+  elDisc.addEventListener(evt, updateFinance);
+  elFixed.addEventListener(evt, updateFinance);
+});
+
+document.getElementById('fixed').value = +budgetSelect.value; 
+updateFinance();
+
+// ---- Scenario save/compare ----
+function snapshot(){
+  return {
+    students:+elStudents.value, fee:+elFee.value, varCost:+elVar.value, disc:+elDisc.value, fixed:+elFixed.value
+  };
+}
+
+function renderSlot(el, data){
+  if(!data){ el.innerHTML = 'Empty'; return; }
+  const m = computeMetrics(data.students, data.fee, data.varCost, data.disc, data.fixed);
+  el.innerHTML = `Students: ${data.students}<br/>Fee: ${data.fee} L<br/>Fixed: ${data.fixed} L<br/>Profit: ${fmtLakhs(m.pnl)}`;
+}
+
+document.getElementById('saveA').addEventListener('click', ()=>{ slotA = snapshot(); localStorage.setItem('slotA', JSON.stringify(slotA)); renderSlot(slotAel, slotA); });
+document.getElementById('saveB').addEventListener('click', ()=>{ slotB = snapshot(); localStorage.setItem('slotB', JSON.stringify(slotB)); renderSlot(slotBel, slotB); });
+
+document.getElementById('clearSlots').addEventListener('click', ()=>{ slotA=null; slotB=null; localStorage.removeItem('slotA'); localStorage.removeItem('slotB'); renderSlot(slotAel,null); renderSlot(slotBel,null); });
+
+// load saved slots
+try{ if(localStorage.getItem('slotA')){ slotA=JSON.parse(localStorage.getItem('slotA')); renderSlot(slotAel,slotA); } if(localStorage.getItem('slotB')){ slotB=JSON.parse(localStorage.getItem('slotB')); renderSlot(slotBel,slotB); } }catch(e){}
+
+// compare
+document.getElementById('compareSlots').addEventListener('click', ()=>{
+  if(!slotA || !slotB){ alert('Save both Slot A and Slot B before comparing.'); return; }
+  const ma = computeMetrics(slotA.students, slotA.fee, slotA.varCost, slotA.disc, slotA.fixed);
+  const mb = computeMetrics(slotB.students, slotB.fee, slotB.varCost, slotB.disc, slotB.fixed);
+  const labels = ['Slot A Profit (Cr)','Slot B Profit (Cr)'];
+  const data = [ma.pnl/100, mb.pnl/100];
+  const cmpWin = window.open('', 'compare', 'width=700,height=420');
+  cmpWin.document.write('<html><head><title>Scenario Comparison</title></head><body style="font-family:Arial;padding:12px;background:#fff;color:#111">');
+  cmpWin.document.write('<h3>Scenario Comparison</h3>');
+  cmpWin.document.write(`<div style="display:flex;gap:12px"><div style="padding:8px;border:1px solid #ddd">Slot A:<br/>Students:${slotA.students}<br/>Profit:${fmtLakhs(ma.pnl)}</div><div style="padding:8px;border:1px solid #ddd">Slot B:<br/>Students:${slotB.students}<br/>Profit:${fmtLakhs(mb.pnl)}</div></div>`);
+  cmpWin.document.write('<canvas id="cmpCanvas" width="640" height="240"></canvas>');
+  cmpWin.document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>');
+  cmpWin.document.write(`<script>new Chart(document.getElementById('cmpCanvas'),{type:'bar',data:{labels:${JSON.stringify(labels)},datasets:[{label:'Profit (Cr)',data:${JSON.stringify(data)},backgroundColor:['#10b981','#f59e0b']}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}})<\/script>`);
+  cmpWin.document.write('</body></html>');
+  cmpWin.document.close();
+});
+
+// =========================
+// D) NOTES (small modal editor)
+// =========================
+const noteModal = document.getElementById('noteModal');
+const noteTitle = document.getElementById('noteTitle');
+const noteText = document.getElementById('noteText');
+const saveNoteBtn = document.getElementById('saveNote');
+const deleteNoteBtn = document.getElementById('deleteNote');
+const closeNoteBtn = document.getElementById('closeNote');
+let activeNoteTask = null;
+
+function openNoteEditor(taskId, taskName){
+  activeNoteTask = taskId;
+  noteTitle.textContent = taskName;
+  noteText.value = notes[taskId] || '';
+  noteModal.style.display = 'block';
+}
+
+saveNoteBtn.addEventListener('click', ()=>{
+  if(!activeNoteTask) return;
+  const v = noteText.value.trim();
+  if(v){ notes[activeNoteTask] = v; } else { delete notes[activeNoteTask]; }
+  localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+  noteModal.style.display = 'none';
+  render();
+});
+
+deleteNoteBtn.addEventListener('click', ()=>{
+  if(activeNoteTask && notes[activeNoteTask]){ delete notes[activeNoteTask]; localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); }
+  noteModal.style.display = 'none'; render();
+});
+
+closeNoteBtn.addEventListener('click', ()=>{ noteModal.style.display='none'; });
+
+// =========================
+// E) Print with Cover
+// =========================
+function printWithCover(){
+  // create cover element
+  const cover = document.createElement('div');
+  cover.id = 'coverPage';
+  cover.style.position='fixed';cover.style.left='0';cover.style.top='0';cover.style.width='100%';cover.style.height='100%';cover.style.background='#ffffff';cover.style.zIndex='9999';cover.style.display='flex';cover.style.flexDirection='column';cover.style.alignItems='center';cover.style.justifyContent='center';
+  cover.innerHTML = `<div style="text-align:center;color:#02121f;padding:40px;font-family:Inter,Arial;"><h1 style='color:#02121f'>Medchal Integrated College</h1><p style='color:#02121f;margin-top:6px'>Investor Presentation - Launch Plan (March 2026)</p><p style='margin-top:18px;color:#333'>Prepared on: ${new Date().toLocaleDateString()}</p></div>`;
+  document.body.insertBefore(cover, document.body.firstChild);
+  // small timeout to ensure cover renders
+  setTimeout(()=>{ window.print(); cover.remove(); }, 500);
+}
+
+// initial render
+render();
+</script>
 </body>
 </html>
