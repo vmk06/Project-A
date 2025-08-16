@@ -74,7 +74,7 @@
     @media (max-width:900px){
       .grid{grid-template-columns:1fr}
       .sim-grid{grid-template-columns:1fr}
-      .result{grid-template-columns:repeat(2,fr)}
+      .result{grid-template-columns:repeat(2,1fr)}
     }
   </style>
 </head>
@@ -364,29 +364,20 @@ function buildHead(){
 }
 
 function buildChart(list){
-  const rowH = 40, gap=8; // Increased row height for better text fit
-  const totalH = list.length*(rowH+gap)+20;
+  const rowH = 32, gap=8; const totalH = list.length*(rowH+gap)+20;
   const months = monthDiff(START, END)+1;
   const svgW = months*MONTH_WIDTH + 40;
   let svg = `<svg width="${svgW}" height="${totalH}">`;
 
   list.forEach((t,idx)=>{
     const s = toDate(t.start), e = toDate(t.end);
-    const x = xFromDate(s)+3;
-    const w = clamp(widthFromRange(s,e), 12, 20000);
-    const y = idx*(rowH+gap)+8;
-    const r=6;
+    const x = xFromDate(s)+3; const w = clamp(widthFromRange(s,e), 12, 20000);
+    const y = idx*(rowH+gap)+8; const r=6;
     const color = TRACKS[t.track].color;
-    const rectHeight = rowH - 12;
-
     svg += `
       <g class="bar" data-id="${t.id}" data-name="${t.name}" data-owner="${t.owner}" data-start="${fmt(s)}" data-end="${fmt(e)}" data-track="${TRACKS[t.track].label}" data-phase="${t.phase}" data-critical="${t.critical?'Yes':'No'}">
-        <rect x="${x}" y="${y}" rx="${r}" ry="${r}" width="${w}" height="${rectHeight}" fill="${color}" />
-        <foreignObject x="${x+4}" y="${y}" width="${w-8}" height="${rectHeight}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="height:100%; display:flex; align-items:center; color:#fff; font-weight:600; font-size:12px; line-height:1.2; padding: 2px; word-wrap:break-word;">
-            ${t.name}
-          </div>
-        </foreignObject>
+        <rect x="${x}" y="${y-2}" rx="${r}" ry="${r}" width="${w}" height="${rowH-8}" fill="${color}" />
+        <text x="${x+8}" y="${y+16}" fill="#fff" font-weight="600" font-size="12">${t.name}</text>
       </g>`;
   });
 
@@ -405,7 +396,6 @@ function buildChart(list){
     el.addEventListener('click', ()=> openNoteEditor(el.dataset.id, el.dataset.name));
   });
 }
-
 
 function computeKPIs(list){
   kpiTasks.textContent = list.length;
@@ -689,4 +679,13 @@ closeNoteBtn.addEventListener('click', ()=>{ noteModal.style.display='none'; });
 function printWithCover(){
   const cover = document.createElement('div');
   cover.id = 'coverPage';
-  cover.style.position='fixed';cover.style.left='0';cover.style.top='0';cover.style.width='100%';cover.style.height='100%';cover.style.background='#ffffff';cover.style.zIndex='9999';cover
+  cover.style.position='fixed';cover.style.left='0';cover.style.top='0';cover.style.width='100%';cover.style.height='100%';cover.style.background='#ffffff';cover.style.zIndex='9999';cover.style.display='flex';cover.style.flexDirection='column';cover.style.alignItems='center';cover.style.justifyContent='center';
+  cover.innerHTML = `<div style="text-align:center;color:#0d47a1;padding:40px;font-family:Inter,Arial;"><h1 style='color:#0d47a1; font-size:32px;'>Medchal Integrated College</h1><p style='color:#546e7a;margin-top:6px; font-size: 18px;'>Investor Presentation - Launch Plan (March 2026)</p><p style='margin-top:24px;color:#78909c;'>Prepared on: ${new Date().toLocaleDateString()}</p></div>`;
+  document.body.insertBefore(cover, document.body.firstChild);
+  setTimeout(()=>{ window.print(); cover.remove(); }, 500);
+}
+
+render();
+</script>
+</body>
+</html>
