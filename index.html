@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Interactive Gantt – Integrated College (Medchal)</title>
+<style>
+  :root{
+    --bg:#0b1220;--panel:#111827;--card:#0f172a;--muted:#cbd5e1;--text:#e5e7eb;
+    --accent:#22d3ee;--green:#10b981;--amber:#f59e0b;--rose:#f43f5e;--violet:#8b5cf6;--blue:#3b82f6;
+  }
+  *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";background:var(--bg);color:var(--text)}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,rgba(11,18,32,.9),rgba(11,18,32,.5));backdrop-filter:blur(6px);border-bottom:1px solid #1f2937}
+  .wrap{max-width:1200px;margin:0 auto;padding:16px}
+  h1{font-size:22px;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:13px}
+  .panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:14px;margin:16px 0}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .badge{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid #334155;background:#0b1220}
+  .btn{background:#0ea5e9;border:0;color:#02121f;padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer}
+  .btn.secondary{background:#111827;color:#cbd5e1;border:1px solid #2a3445}
+  .grid{display:grid;grid-template-columns:260px 1fr;gap:12px}
+  .left{background:var(--card);border:1px solid #1e293b;border-radius:14px;padding:8px}
+  .right{background:var(--card);border:1px solid #1e293b;border-radius:14px;overflow:auto}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .legend .item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  .swatch{width:12px;height:12px;border-radius:3px}
+  .row{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px dashed #1f2937}
+  .row:last-child{border-bottom:0}
+  .row small{color:#93a3b8}
+  .sticky-head{position:sticky;top:0;background:#0b1220;border-bottom:1px solid #1f2937;padding:6px 8px;z-index:5}
+  svg{display:block}
+  .tooltip{position:fixed;pointer-events:none;background:#0b1220;border:1px solid #334155;color:#e5e7eb;padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.2;box-shadow:0 8px 20px rgba(0,0,0,.35);opacity:0;transform:translateY(6px);transition:opacity .12s ease, transform .12s ease}
+  .pill{display:inline-block;padding:2px 6px;border-radius:999px;font-size:11px;margin-left:6px;color:#0b1220}
+  .notice{font-size:12px;color:#9fb0c9}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+  .kpi .card{background:#0b1220;border:1px solid #1f2937;border-radius:10px;padding:10px}
+  .kpi .label{font-size:11px;color:#93a3b8}
+  .kpi .value{font-size:18px;font-weight:700}
+  .filter{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+  .filter label{display:flex;align-items:center;gap:6px;font-size:12px;color:#cbd5e1}
+  .scale{display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Interactive Gantt – Integrated Intermediate College (Medchal)</h1>
+      <div class="sub">Launch <strong>March 2026</strong> • Target <strong>200 students (Y1)</strong> • Tracks: Approvals, Infrastructure, Academics, Hiring, Marketing, Admissions</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="panel">
+      <div class="controls">
+        <span class="badge">Timespan: <strong>Mar 2025 → Mar 2027</strong></span>
+        <div class="scale">
+          <button class="btn secondary" id="zoomOut">−</button>
+          <span class="badge" id="scaleLabel">Scale: 36px / month</span>
+          <button class="btn secondary" id="zoomIn">+</button>
+        </div>
+        <button class="btn" id="printBtn">Print / Save PDF</button>
+      </div>
+      <div class="legend">
+        <div class="item"><span class="swatch" style="background:var(--accent)"></span> Approvals & Compliance</div>
+        <div class="item"><span class="swatch" style="background:var(--blue)"></span> Infrastructure</div>
+        <div class="item"><span class="swatch" style="background:var(--green)"></span> Academics & Content</div>
+        <div class="item"><span class="swatch" style="background:var(--amber)"></span> Hiring & Training</div>
+        <div class="item"><span class="swatch" style="background:var(--rose)"></span> Marketing & Admissions</div>
+      </div>
+      <div class="filter" id="filters"></div>
+      <div class="kpi">
+        <div class="card"><div class="label">Total Tasks</div><div class="value" id="kpiTasks">–</div></div>
+        <div class="card"><div class="label">Open Now</div><div class="value" id="kpiOpen">–</div></div>
+        <div class="card"><div class="label">Critical (Launch‑blocking)</div><div class="value" id="kpiCritical">–</div></div>
+        <div class="card"><div class="label">On‑time Probability</div><div class="value" id="kpiOTP">–</div></div>
+      </div>
+    </section>
+
+    <section class="grid" id="ganttGrid">
+      <aside class="left">
+        <div class="sticky-head">Tasks</div>
+        <div id="taskList"></div>
+      </aside>
+      <section class="right">
+        <div class="sticky-head" id="timelineHead"></div>
+        <div id="chart"></div>
+      </section>
+    </section>
+
+    <p class="notice">Tip: Use the filters to focus on a specific track; zoom to adjust month width. Hover bars to see dates & owners. Print to save as PDF for investor updates.</p>
+  </main>
+
+  <div class="tooltip" id="tooltip"></div>
+
+<script>
+// ======== DATA ========
+// Months are 0-indexed: Jan=0. Our window: Mar 2025 (2025-02) .. Mar 2027 (2027-02)
+const START = new Date(2025, 2, 1); // Mar 1, 2025
+const END   = new Date(2027, 2, 1); // Mar 1, 2027
+
+const TRACKS = {
+  approvals:   { label: 'Approvals & Compliance', color: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() },
+  infra:       { label: 'Infrastructure',          color: getComputedStyle(document.documentElement).getPropertyValue('--blue').trim() },
+  academics:   { label: 'Academics & Content',     color: getComputedStyle(document.documentElement).getPropertyValue('--green').trim() },
+  hiring:      { label: 'Hiring & Training',       color: getComputedStyle(document.documentElement).getPropertyValue('--amber').trim() },
+  marketing:   { label: 'Marketing & Admissions',  color: getComputedStyle(document.documentElement).getPropertyValue('--rose').trim() },
+};
+
+const TASKS = [
+  // Approvals & Compliance
+  { id:'aff1', name:'Legal entity & compliance framework', owner:'Admin Head', start:'2025-03-01', end:'2025-04-15', track:'approvals', critical:true },
+  { id:'aff2', name:'Telangana Board Affiliation – application & inspections', owner:'Principal', start:'2025-04-10', end:'2025-08-31', track:'approvals', critical:true },
+  { id:'aff3', name:'Safety & fire NOC, lab compliance', owner:'Admin Head', start:'2025-06-01', end:'2025-08-15', track:'approvals', critical:true },
+
+  // Infrastructure
+  { id:'inf1', name:'Campus lease & layout finalization (Medchal)', owner:'Founder', start:'2025-03-15', end:'2025-04-30', track:'infra', critical:true },
+  { id:'inf2', name:'Civil fit‑out (classrooms, labs, library)', owner:'Vendor', start:'2025-05-01', end:'2025-11-15', track:'infra', critical:true },
+  { id:'inf3', name:'Furniture & smart‑class install', owner:'Vendor', start:'2025-09-01', end:'2025-12-10', track:'infra', critical:false },
+  { id:'inf4', name:'IT / LMS / EDP setup & testing', owner:'IT Lead', start:'2025-12-01', end:'2026-01-20', track:'infra', critical:true },
+
+  // Academics & Content
+  { id:'ac1', name:'Recruit core faculty (PCM + Bio)', owner:'Founder', start:'2025-09-01', end:'2025-10-15', track:'academics', critical:true },
+  { id:'ac2', name:'Syllabus mapping (Boards + JEE/NEET) & timetable', owner:'Academic Coord.', start:'2025-10-01', end:'2025-11-15', track:'academics', critical:true },
+  { id:'ac3', name:'Content: Notes, DPPs, Test Series (Y1 set)', owner:'HODs', start:'2025-10-15', end:'2026-01-15', track:'academics', critical:true },
+  { id:'ac4', name:'Faculty induction & pedagogy workshops', owner:'Principal', start:'2025-11-20', end:'2026-01-10', track:'academics', critical:false },
+
+  // Hiring & Training
+  { id:'hr1', name:'Ops/Admin hiring (Admin + Accounts + Frontdesk)', owner:'Admin Head', start:'2025-12-01', end:'2026-01-05', track:'hiring', critical:true },
+  { id:'hr2', name:'Sales team hiring (1 counselor + 1 field exec)', owner:'Admissions', start:'2026-01-01', end:'2026-01-20', track:'hiring', critical:true },
+  { id:'hr3', name:'Support staff onboarding (outsourced)', owner:'Admin', start:'2026-02-01', end:'2026-02-20', track:'hiring', critical:false },
+
+  // Marketing & Admissions
+  { id:'mk1', name:'Branding, website & creatives', owner:'Mktg', start:'2025-10-15', end:'2025-12-10', track:'marketing', critical:false },
+  { id:'mk2', name:'Admission test campaign (digital‑first)', owner:'Mktg', start:'2026-01-05', end:'2026-02-28', track:'marketing', critical:true },
+  { id:'mk3', name:'School outreach & seminars', owner:'Field Exec', start:'2026-01-10', end:'2026-02-25', track:'marketing', critical:true },
+  { id:'mk4', name:'Orientation & batch launch (200 seats)', owner:'Principal', start:'2026-03-01', end:'2026-03-07', track:'marketing', critical:true },
+
+  // Stabilization / Year-2 ramp
+  { id:'yz1', name:'Feedback loop & schedule optimization', owner:'Academic Coord.', start:'2026-04-01', end:'2026-06-30', track:'academics', critical:false },
+  { id:'yz2', name:'Year‑2 admissions cycle prep', owner:'Admissions', start:'2026-09-01', end:'2026-12-31', track:'marketing', critical:false },
+  { id:'yz3', name:'Add librarian + admin (Y2)', owner:'Admin', start:'2026-09-15', end:'2026-10-15', track:'hiring', critical:false },
+];
+
+// ======== STATE ========
+let MONTH_WIDTH = 36; // px per month (zoomable)
+let filters = new Set(Object.keys(TRACKS));
+
+// ======== HELPERS ========
+const msPerDay = 24*3600*1000;
+function monthDiff(a,b){ return (b.getFullYear()-a.getFullYear())*12 + (b.getMonth()-a.getMonth()); }
+function toDate(str){ const [y,m,d]=str.split('-').map(Number); return new Date(y, m-1, d||1); }
+function clamp(v,min,max){ return Math.max(min, Math.min(max,v)); }
+
+function xFromDate(date){ const m = monthDiff(START, date); return m*MONTH_WIDTH; }
+function widthFromRange(s,e){ const md = monthDiff(s,e)+1; return md*MONTH_WIDTH - 6; }
+
+function fmt(d){ return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'2-digit'}); }
+
+// ======== BUILD UI ========
+const taskListEl = document.getElementById('taskList');
+const chartEl = document.getElementById('chart');
+const headEl = document.getElementById('timelineHead');
+const tooltip = document.getElementById('tooltip');
+const filtersEl = document.getElementById('filters');
+const kpiTasks = document.getElementById('kpiTasks');
+const kpiOpen = document.getElementById('kpiOpen');
+const kpiCritical = document.getElementById('kpiCritical');
+const kpiOTP = document.getElementById('kpiOTP');
+const scaleLabel = document.getElementById('scaleLabel');
+
+function buildFilters(){
+  filtersEl.innerHTML = '';
+  Object.entries(TRACKS).forEach(([k,v])=>{
+    const id = `f_${k}`;
+    const lbl = document.createElement('label');
+    lbl.innerHTML = `<input type="checkbox" id="${id}" checked> ${v.label}`;
+    lbl.querySelector('input').addEventListener('change', (e)=>{
+      if(e.target.checked) filters.add(k); else filters.delete(k); render();
+    });
+    filtersEl.appendChild(lbl);
+  });
+}
+
+function buildLeft(list){
+  taskListEl.innerHTML='';
+  list.forEach(t=>{
+    const row = document.createElement('div');
+    row.className='row';
+    const pillColor = TRACKS[t.track].color;
+    row.innerHTML = `<div>
+      <div>${t.name}${t.critical?`<span class="pill" style="background:${pillColor};">Critical</span>`:''}</div>
+      <small>${t.owner}</small>
+    </div>`;
+    taskListEl.appendChild(row);
+  });
+}
+
+function buildHead(){
+  const months = monthDiff(START, END)+1;
+  const svgW = months*MONTH_WIDTH + 40;
+  const h = 40;
+  let x=0; const y=0;
+  let svg = `<svg width="${svgW}" height="${h}">`;
+  for(let i=0;i<months;i++){
+    const dt = new Date(START.getFullYear(), START.getMonth()+i, 1);
+    const label = dt.toLocaleDateString(undefined,{year:'2-digit',month:'short'});
+    svg += `<g transform="translate(${x},${y})">
+      <rect x="0" y="0" width="${MONTH_WIDTH}" height="${h}" fill="transparent" stroke="#1f2937" />
+      <text x="${MONTH_WIDTH/2}" y="24" fill="#cbd5e1" font-size="12" text-anchor="middle">${label}</text>
+    </g>`;
+    x+=MONTH_WIDTH;
+  }
+  svg += `</svg>`;
+  headEl.innerHTML = svg;
+}
+
+function buildChart(list){
+  const rowH = 32, gap=8; const totalH = list.length*(rowH+gap)+20;
+  const months = monthDiff(START, END)+1;
+  const svgW = months*MONTH_WIDTH + 40;
+  let svg = `<svg width="${svgW}" height="${totalH}">`;
+
+  // horizontal lanes
+  for(let i=0;i<list.length;i++){
+    const y = i*(rowH+gap)+4;
+    svg += `<rect x="0" y="${y}" width="${svgW}" height="${rowH}" fill="transparent" stroke="#0f172a"/>`;
+  }
+
+  // bars
+  list.forEach((t,idx)=>{
+    const s = toDate(t.start), e = toDate(t.end);
+    const x = xFromDate(s)+3; const w = clamp(widthFromRange(s,e), 12, 20000);
+    const y = idx*(rowH+gap)+8; const r=6;
+    const color = TRACKS[t.track].color;
+    const darker = '#0b1220';
+    svg += `
+      <g class="bar" data-id="${t.id}" data-name="${t.name}" data-owner="${t.owner}" data-start="${fmt(s)}" data-end="${fmt(e)}" data-track="${TRACKS[t.track].label}" data-critical="${t.critical?'Yes':'No'}">
+        <rect x="${x}" y="${y}" rx="${r}" ry="${r}" width="${w}" height="${rowH-8}" fill="${color}" opacity="0.9" />
+        <rect x="${x}" y="${y}" rx="${r}" ry="${r}" width="${w}" height="${rowH-8}" fill="${darker}" opacity="0.12" />
+        <text x="${x+8}" y="${y+18}" fill="#06131e" font-weight="700" font-size="12">${t.name}</text>
+      </g>`;
+  });
+
+  svg += `</svg>`;
+  chartEl.innerHTML = svg;
+
+  // Tooltip interactions
+  chartEl.querySelectorAll('.bar').forEach(el=>{
+    el.addEventListener('mousemove', (e)=>{
+      const ds = el.dataset;
+      tooltip.innerHTML = `<strong>${ds.name}</strong><br>${ds.track} · Owner: ${ds.owner}<br>${ds.start} → ${ds.end}${ds.critical==='Yes'?' · <em>Critical</em>':''}`;
+      tooltip.style.left = (e.clientX+12)+'px';
+      tooltip.style.top  = (e.clientY+12)+'px';
+      tooltip.style.opacity = 1; tooltip.style.transform='translateY(0)';
+    });
+    el.addEventListener('mouseleave', ()=>{ tooltip.style.opacity = 0; tooltip.style.transform='translateY(6px)'; });
+  });
+}
+
+function computeKPIs(list){
+  kpiTasks.textContent = list.length;
+  const now = new Date();
+  const open = list.filter(t=> toDate(t.start) <= now && now <= toDate(t.end)).length;
+  kpiOpen.textContent = open;
+  const critical = list.filter(t=> t.critical).length; kpiCritical.textContent = critical;
+  // naive OTP heuristic: 100 - % critical remaining weighted by time
+  const remainingCritical = list.filter(t=> t.critical && toDate(t.end) > now).length;
+  const otp = clamp(100 - Math.round((remainingCritical/Math.max(critical,1))*40), 40, 98);
+  kpiOTP.textContent = otp + '%';
+}
+
+function render(){
+  const list = TASKS.filter(t=> filters.has(t.track));
+  buildLeft(list); buildHead(); buildChart(list); computeKPIs(list);
+  scaleLabel.textContent = `Scale: ${MONTH_WIDTH}px / month`;
+}
+
+// Build filters UI and render
+buildFilters(); render();
+
+// Zoom & Print
+const zoomIn = document.getElementById('zoomIn');
+const zoomOut = document.getElementById('zoomOut');
+const printBtn = document.getElementById('printBtn');
+zoomIn.onclick = ()=>{ MONTH_WIDTH = clamp(MONTH_WIDTH+6, 18, 96); render(); };
+zoomOut.onclick = ()=>{ MONTH_WIDTH = clamp(MONTH_WIDTH-6, 18, 96); render(); };
+printBtn.onclick = ()=> window.print();
+</script>
+</body>
+</html>
