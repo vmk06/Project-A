@@ -1,244 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Financial Simulator – Integrated Intermediate College (Medchal)</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<style>
-  :root{
-    --bg:#0b1220;--panel:#0f172a;--card:#111827;--muted:#9fb0c9;--text:#e5e7eb;
-    --accent:#22d3ee;--green:#10b981;--amber:#f59e0b;--rose:#f43f5e;--violet:#8b5cf6;--blue:#3b82f6;
-  }
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial}
-  header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,rgba(11,18,32,.95),rgba(11,18,32,.6));backdrop-filter:blur(6px);border-bottom:1px solid #1f2937}
-  .wrap{max-width:1200px;margin:0 auto;padding:14px}
-  h1{font-size:22px;margin:0 0 6px}
-  .sub{color:var(--muted);font-size:13px}
-  .panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:14px;margin:14px 0}
-  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-  .badge{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid #334155;background:#0b1220}
-  .btn{background:#0ea5e9;border:0;color:#02121f;padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer}
-  .btn.secondary{background:#111827;color:#cbd5e1;border:1px solid #2a3445}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
-  .kpis .card{background:#0b1220;border:1px solid #1f2937;border-radius:12px;padding:10px}
-  .kpis .label{font-size:11px;color:#93a3b8}
-  .kpis .value{font-size:18px;font-weight:700}
-  .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:8px}
-  select,input[type="number"]{background:#0b1220;border:1px solid #2a3445;color:#e5e7eb;border-radius:10px;padding:8px}
-  input[type="range"]{width:260px}
-  .legend{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
-  .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px}
-  canvas{background:#0b1220;border:1px solid #1f2937;border-radius:12px;padding:8px}
-  .notice{font-size:12px;color:var(--muted)}
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Financial Simulator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <header>
-    <div class="wrap">
-      <h1>Financial Simulator – Integrated Intermediate College (Medchal)</h1>
-      <div class="sub">Budget caps, intake what‑ifs, monthly burn, and break‑even preview for <strong>Launch March 2026</strong>.</div>
+<body class="bg-gray-100 text-gray-800">
+  <!-- Navbar -->
+  <nav class="bg-white shadow p-4 flex justify-between">
+    <h1 class="text-xl font-bold">Financial Simulator</h1>
+    <div class="space-x-4">
+      <a href="index.html" class="text-blue-600 hover:underline">Dashboard</a>
+      <a href="simulator.html" class="text-blue-600 hover:underline">Simulator</a>
     </div>
-  </header>
+  </nav>
 
-  <main class="wrap">
-    <section class="panel">
-      <div class="row">
-        <span class="badge">Window: <strong>Mar 2025 → Mar 2026</strong> (13 months)</span>
-        <div class="controls">
-          <label class="badge">Budget Cap
-            <select id="capSelect">
-              <option value="15000000">₹1.5 Cr</option>
-              <option value="16000000" selected>₹1.6 Cr</option>
-              <option value="21000000">₹2.1 Cr</option>
-            </select>
-          </label>
-          <label class="badge">Student Intake
-            <input type="range" id="intake" min="150" max="300" step="5" value="200" />
-            <span id="intakeVal">200</span>
-          </label>
-          <label class="badge">Fee / student
-            <input type="number" id="fee" value="120000" min="60000" step="5000" />
-          </label>
-          <label class="badge">Variable Cost / student
-            <input type="number" id="varCost" value="40000" min="20000" step="5000" />
-          </label>
-          <button class="btn" id="exportPNG">Download PNG</button>
-          <button class="btn secondary" id="printBtn">Print / Save PDF</button>
-        </div>
-      </div>
-      <div class="kpis" id="kpis">
-        <div class="card"><div class="label">Budget Cap</div><div class="value" id="kCap">–</div></div>
-        <div class="card"><div class="label">Break‑even Students</div><div class="value" id="kBE">–</div></div>
-        <div class="card"><div class="label">Selected Intake</div><div class="value" id="kIntake">–</div></div>
-        <div class="card"><div class="label">Projected Revenue</div><div class="value" id="kRev">–</div></div>
-        <div class="card"><div class="label">Total Expenses (Y1)</div><div class="value" id="kExp">–</div></div>
-        <div class="card"><div class="label">Surplus / (Deficit)</div><div class="value" id="kSurp">–</div></div>
-      </div>
-    </section>
+  <!-- Simulator Section -->
+  <div class="p-6 max-w-4xl mx-auto">
+    <h2 class="text-2xl font-semibold mb-4">Interactive Financial Simulator</h2>
+    <p class="mb-6">Adjust student intake, fees, and budget caps to visualize breakeven and sustainability.</p>
 
-    <section class="panel">
-      <div class="legend">
-        <span><span class="sw" style="background:var(--violet)"></span>CAPEX</span>
-        <span><span class="sw" style="background:var(--amber)"></span>Fixed OPEX</span>
-        <span><span class="sw" style="background:var(--green)"></span>Variable OPEX (intake‑linked)</span>
-        <span><span class="sw" style="background:var(--blue)"></span>Revenue (receipt pattern)</span>
-        <span><span class="sw" style="background:var(--rose)"></span>Budget Cap (line)</span>
-        <span><span class="sw" style="background:var(--accent)"></span>Cumulative Burn</span>
-      </div>
-      <div class="grid">
-        <div>
-          <canvas id="stacked"></canvas>
-        </div>
-        <div>
-          <canvas id="cumulative"></canvas>
-        </div>
-      </div>
-      <p class="notice">Assumptions: 60% of fee is received close to admissions (Jan–Mar 2026), 40% earlier via early offers (Nov–Dec 2025). Adjust with the intake slider and fee/variable inputs.</p>
-    </section>
-  </main>
+    <!-- Student Intake -->
+    <div class="mb-6">
+      <label for="students" class="block font-semibold mb-2">Student Intake: <span id="studentsValue">200</span></label>
+      <input type="range" id="students" min="150" max="250" value="200" class="w-full"/>
+    </div>
 
-<script>
-// ====== TIME WINDOW ======
-const labels = [
-  'Mar-25','Apr-25','May-25','Jun-25','Jul-25','Aug-25','Sep-25','Oct-25','Nov-25','Dec-25','Jan-26','Feb-26','Mar-26'
-];
+    <!-- Fee per student -->
+    <div class="mb-6">
+      <label for="fee" class="block font-semibold mb-2">Annual Fee per Student (₹ Lakhs): <span id="feeValue">1.0</span></label>
+      <input type="range" id="fee" min="0.8" max="1.5" step="0.05" value="1.0" class="w-full"/>
+    </div>
 
-// ====== BASELINES (edit as needed) ======
-// CAPEX concentrated during infra setup (Jun–Dec 2025)
-const capex =   [  0,   5,   8,  15,  18,  24,  20,  14,   6,   5,   2,   1,   0].map(x=>x*100000);
-// Fixed OPEX grows as hiring begins (Nov 2025 onward)
-const fixedOpex = [ 4,   4,   4,   5,   5,   6,   7,   8,   9,  10,  12,  12,  13].map(x=>x*100000);
-// Revenue receipt pattern (40% Nov–Dec, 60% Jan–Mar)
-function revenueFor(intake, fee){
-  const total = intake*fee;
-  const arr = Array(labels.length).fill(0);
-  // 20% Nov, 20% Dec, 25% Jan, 20% Feb, 15% Mar
-  const idx = {Nov:8, Dec:9, Jan:10, Feb:11, Mar:12};
-  arr[idx.Nov] = 0.20*total;
-  arr[idx.Dec] = 0.20*total;
-  arr[idx.Jan] = 0.25*total;
-  arr[idx.Feb] = 0.20*total;
-  arr[idx.Mar] = 0.15*total;
-  return arr;
-}
+    <!-- Budget Cap -->
+    <div class="mb-6">
+      <label for="budget" class="block font-semibold mb-2">Budget Cap (Cr):</label>
+      <select id="budget" class="border rounded p-2">
+        <option value="1.5">₹1.5 Cr</option>
+        <option value="1.6">₹1.6 Cr</option>
+        <option value="2.1">₹2.1 Cr</option>
+      </select>
+    </div>
 
-// Variable OPEX per student (distributed evenly across the year)
-function variableOpexFor(intake, varPerStudent){
-  const total = intake*varPerStudent;
-  const monthly = total/labels.length;
-  return Array(labels.length).fill(monthly);
-}
+    <!-- Results -->
+    <div class="bg-white p-4 rounded shadow mb-6">
+      <p class="font-semibold">Projected Revenue: <span id="revenue">₹0 Cr</span></p>
+      <p class="font-semibold">Projected Expense (Burn): <span id="expense">₹0 Cr</span></p>
+      <p class="font-semibold">Breakeven Status: <span id="breakeven">Calculating...</span></p>
+    </div>
 
-// ====== CHARTS ======
-const stackedCtx = document.getElementById('stacked');
-const cumulativeCtx = document.getElementById('cumulative');
-let stackedChart, cumulativeChart;
+    <!-- Chart -->
+    <div class="bg-white p-6 rounded shadow">
+      <canvas id="simulatorChart"></canvas>
+    </div>
+  </div>
 
-function fmtINR(x){
-  return '₹'+ x.toLocaleString('en-IN', {maximumFractionDigits:0});
-}
-
-function recalc(){
-  const cap = Number(document.getElementById('capSelect').value);
-  const intake = Number(document.getElementById('intake').value);
-  const fee = Number(document.getElementById('fee').value);
-  const varCost = Number(document.getElementById('varCost').value);
-
-  document.getElementById('intakeVal').textContent = intake;
-
-  const revArr = revenueFor(intake, fee);
-  const varArr = variableOpexFor(intake, varCost);
-
-  // Total expenses vector (capex + fixed + variable)
-  const totalExp = labels.map((_,i)=> capex[i] + fixedOpex[i] + varArr[i]);
-  const cumBurn = totalExp.reduce((acc,v,i)=>{ acc.push((acc[i-1]||0)+v); return acc; }, []);
-  const capLine = labels.map(_=>cap);
-
-  // KPIs
-  const totalRevenue = revArr.reduce((a,b)=>a+b,0);
-  const totalExpenses = totalExp.reduce((a,b)=>a+b,0);
-  const surplus = totalRevenue - totalExpenses;
-
-  const netContributionPerStudent = fee - varCost; // ₹
-  const beStudents = Math.ceil(cap / Math.max(netContributionPerStudent,1));
-
-  document.getElementById('kCap').textContent = fmtINR(cap);
-  document.getElementById('kBE').textContent = beStudents + ' students';
-  document.getElementById('kIntake').textContent = intake;
-  document.getElementById('kRev').textContent = fmtINR(totalRevenue);
-  document.getElementById('kExp').textContent = fmtINR(totalExpenses);
-  document.getElementById('kSurp').textContent = (surplus>=0? '✅ ' : '❌ ') + fmtINR(surplus);
-
-  const datasetsStacked = [
-    {label:'CAPEX', data: capex, backgroundColor:'#8b5cf6'},
-    {label:'Fixed OPEX', data: fixedOpex, backgroundColor:'#f59e0b'},
-    {label:'Variable OPEX', data: varArr, backgroundColor:'#10b981'},
-    {type:'line', label:'Revenue', data: revArr, borderColor:'#3b82f6', borderWidth:2, pointRadius:2, tension:.3, yAxisID:'y'}
-  ];
-
-  const datasetsCum = [
-    {type:'line', label:'Cumulative Burn', data: cumBurn, borderColor:'#22d3ee', borderWidth:3, pointRadius:0, tension:.25},
-    {type:'line', label:'Budget Cap', data: capLine, borderColor:'#f43f5e', borderWidth:2, borderDash:[6,6], pointRadius:0}
-  ];
-
-  // Build/Update charts
-  if(stackedChart){ stackedChart.data.datasets = datasetsStacked; stackedChart.update(); }
-  else{
-    stackedChart = new Chart(stackedCtx, {
-      data: { labels, datasets: datasetsStacked },
-      options: {
-        responsive:true, maintainAspectRatio:false, aspectRatio:1.2,
-        plugins:{
-          legend:{labels:{color:'#e5e7eb'}},
-          tooltip:{callbacks:{ label:(ctx)=> `${ctx.dataset.label}: ${fmtINR(ctx.raw||0)}`}}
-        },
-        scales:{
-          x:{ stacked:true, ticks:{color:'#cbd5e1'} , grid:{color:'#1f2937'}},
-          y:{ stacked:true, ticks:{color:'#cbd5e1', callback:(v)=> '₹'+(v/100000).toFixed(0)+'L'}, grid:{color:'#1f2937'}},
-        }
-      }
-    });
-  }
-
-  if(cumulativeChart){ cumulativeChart.data.datasets = datasetsCum; cumulativeChart.update(); }
-  else{
-    cumulativeChart = new Chart(cumulativeCtx, {
-      data: { labels, datasets: datasetsCum },
-      options: {
-        responsive:true, maintainAspectRatio:false, aspectRatio:1.2,
-        plugins:{ legend:{labels:{color:'#e5e7eb'}}, tooltip:{callbacks:{ label:(ctx)=> `${ctx.dataset.label}: ${fmtINR(ctx.raw||0)}` }}},
-        scales:{ x:{ ticks:{color:'#cbd5e1'}, grid:{color:'#1f2937'} }, y:{ ticks:{color:'#cbd5e1', callback:(v)=> '₹'+(v/100000).toFixed(0)+'L'}, grid:{color:'#1f2937'} } }
-      }
-    });
-  }
-}
-
-// Events
-['capSelect','intake','fee','varCost'].forEach(id=> document.getElementById(id).addEventListener('input', recalc));
-
-document.getElementById('exportPNG').addEventListener('click', ()=>{
-  // Combine both charts into one canvas image
-  const canvases = [stackedCtx, cumulativeCtx];
-  const w = 1200, h = 700; const tmp = document.createElement('canvas'); tmp.width=w; tmp.height=h; const g=tmp.getContext('2d');
-  g.fillStyle = '#0b1220'; g.fillRect(0,0,w,h);
-  g.fillStyle = '#e5e7eb'; g.font='700 18px Inter'; g.fillText('Financial Simulator – Medchal (Export)', 20, 28);
-  canvases.forEach((c, i)=>{
-    const ratio = Math.min((w-40)/c.width, (h/2-40)/c.height);
-    const cw = c.width*ratio, ch=c.height*ratio; const x=20, y=50 + i*(h/2);
-    g.drawImage(c, x, y, cw, ch);
-  });
-  const link = document.createElement('a'); link.download = 'financial-sim-medchal.png'; link.href = tmp.toDataURL('image/png'); link.click();
-});
-
-document.getElementById('printBtn').addEventListener('click', ()=> window.print());
-
-// init
-recalc();
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="simulator.js"></script>
 </body>
 </html>
