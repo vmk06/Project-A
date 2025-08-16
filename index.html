@@ -1,51 +1,250 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>College Launch Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 text-gray-800">
-  <!-- Navbar -->
-  <nav class="bg-white shadow p-4 flex justify-between">
-    <h1 class="text-xl font-bold">College Launch Dashboard</h1>
-    <div class="space-x-4">
-      <a href="index.html" class="text-blue-600 hover:underline">Dashboard</a>
-      <a href="simulator.html" class="text-blue-600 hover:underline">Financial Simulator</a>
-    </div>
-  </nav>
-
-  <!-- Main Content -->
-  <div class="p-6">
-    <h2 class="text-2xl font-semibold mb-4">Overview</h2>
-    <p>Welcome to the integrated college launch dashboard. Use the Financial Simulator to test different fee structures, student intake levels, and budgets.</p>
-
-    <!-- Example chart / content placeholder -->
-    <div class="mt-6 bg-white shadow rounded-lg p-6">
-      <h3 class="text-lg font-semibold mb-2">Burn vs Budget</h3>
-      <canvas id="burnChart"></canvas>
-    </div>
-  </div>
-
-  <!-- Chart.js -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>College Launch Plan Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f7fa;
+      color: #333;
+    }
+
+    header {
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 10px;
+    }
+
+    section {
+      margin: 30px auto;
+      padding: 20px;
+      width: 90%;
+      max-width: 1200px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .chart-container {
+      position: relative;
+      height: 400px;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    .slider-container {
+      margin-top: 20px;
+    }
+    .slider-container label {
+      font-weight: bold;
+    }
+    .slider-container input {
+      width: 100%;
+    }
+    .results {
+      margin-top: 15px;
+      font-size: 1.1em;
+      background: #f1f1f1;
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    .breakeven-marker {
+      font-weight: bold;
+      color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>College Launch Plan Dashboard</h1>
+    <p>Medchal Integrated College – Launching March 2026</p>
+  </header>
+
+  <!-- Gantt-Style Timeline -->
+  <section>
+    <h2>📅 Launch Timeline</h2>
+    <canvas id="timelineChart"></canvas>
+  </section>
+
+  <!-- OPEX vs Budget -->
+  <section>
+    <h2>💰 OPEX Comparison</h2>
+    <p>Comparing budget allocation between conservative (₹1.5–1.6 Cr) and expanded (₹2.1 Cr) scenarios.</p>
+    <div class="chart-container">
+      <canvas id="opexChart"></canvas>
+    </div>
+  </section>
+
+  <!-- Financial Simulator -->
+  <section>
+    <h2>📊 Student Intake Financial Simulator</h2>
+    <p>Adjust the slider to simulate fee revenue vs operating expenses.</p>
+
+    <div class="slider-container">
+      <label for="students">Number of Students: <span id="studentCount">200</span></label>
+      <input type="range" id="students" min="50" max="400" step="10" value="200">
+    </div>
+
+    <div class="slider-container">
+      <label for="fee">Fee per Student (₹ Lakhs): <span id="feeValue">1.5</span></label>
+      <input type="range" id="fee" min="1" max="3" step="0.1" value="1.5">
+    </div>
+
+    <div class="results">
+      <p>Revenue: ₹<span id="revenue">3.0</span> Cr</p>
+      <p>Expenses (OPEX): ₹<span id="expenses">1.5</span> Cr</p>
+      <p>Net Balance: <span id="netBalance">+₹1.5 Cr</span></p>
+      <p class="breakeven-marker" id="breakevenNote"></p>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="financeChart"></canvas>
+    </div>
+  </section>
+
   <script>
-    const ctx = document.getElementById('burnChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'line',
+    // ========== Gantt-Style Timeline ==========
+    const timelineCtx = document.getElementById('timelineChart');
+    new Chart(timelineCtx, {
+      type: 'bar',
       data: {
-        labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"],
+        labels: [
+          'Site Preparation',
+          'Faculty Recruitment',
+          'Marketing Campaign',
+          'Admissions',
+          'Training & Orientation',
+          'Academic Launch'
+        ],
         datasets: [{
-          label: "Monthly Burn (₹ Lakhs)",
-          data: [8, 10, 12, 13, 14, 15, 15, 15, 16, 16, 16, 18],
-          borderColor: "blue",
-          borderWidth: 2,
-          fill: false,
-          tension: 0.3
+          label: 'Timeline (months)',
+          data: [2, 3, 4, 3, 2, 1],
+          backgroundColor: '#3498db'
         }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: 'College Launch Activities Duration'
+          }
+        }
       }
     });
+
+    // ========== OPEX Comparison ==========
+    const opexCtx = document.getElementById('opexChart');
+    new Chart(opexCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Faculty Salaries', 'Infrastructure', 'Marketing', 'Operations'],
+        datasets: [
+          {
+            label: '₹1.5 Cr Plan',
+            data: [70, 40, 25, 15],
+            backgroundColor: '#2ecc71'
+          },
+          {
+            label: '₹2.1 Cr Plan',
+            data: [95, 55, 35, 25],
+            backgroundColor: '#e67e22'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'OPEX Allocation (₹ Lakhs)'
+          }
+        },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+    // ========== Financial Simulator ==========
+    const studentSlider = document.getElementById('students');
+    const feeSlider = document.getElementById('fee');
+    const studentCount = document.getElementById('studentCount');
+    const feeValue = document.getElementById('feeValue');
+    const revenueSpan = document.getElementById('revenue');
+    const expensesSpan = document.getElementById('expenses');
+    const netBalanceSpan = document.getElementById('netBalance');
+    const breakevenNote = document.getElementById('breakevenNote');
+    const financeCtx = document.getElementById('financeChart');
+
+    const opex = 1.5; // Fixed OPEX in Cr
+    let financeChart;
+
+    function updateFinance() {
+      const students = parseInt(studentSlider.value);
+      const fee = parseFloat(feeSlider.value);
+      const revenue = (students * fee) / 100; // converting lakhs into Cr (100 students * 1 lakh = 1 Cr)
+
+      const net = revenue - opex;
+
+      // Update UI
+      studentCount.innerText = students;
+      feeValue.innerText = fee.toFixed(1);
+      revenueSpan.innerText = revenue.toFixed(1);
+      expensesSpan.innerText = opex.toFixed(1);
+      netBalanceSpan.innerText = `${net >= 0 ? '+' : ''}₹${net.toFixed(1)} Cr`;
+
+      // Breakeven calculation
+      const breakevenStudents = Math.ceil((opex * 100) / fee);
+      if (students < breakevenStudents) {
+        breakevenNote.innerText = `❌ Breakeven requires at least ${breakevenStudents} students at ₹${fee.toFixed(1)} Lakh fee.`;
+      } else {
+        breakevenNote.innerText = `✅ Breakeven achieved at ${breakevenStudents} students. Current: ${students}`;
+      }
+
+      // Update finance chart
+      if (financeChart) financeChart.destroy();
+      financeChart = new Chart(financeCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Revenue', 'Expenses'],
+          datasets: [{
+            label: '₹ Cr',
+            data: [revenue, opex],
+            backgroundColor: ['#27ae60', '#c0392b']
+          }]
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Revenue vs Expenses'
+            }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    // Initialize
+    studentSlider.addEventListener('input', updateFinance);
+    feeSlider.addEventListener('input', updateFinance);
+    updateFinance();
   </script>
 </body>
 </html>
