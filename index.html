@@ -1,691 +1,291 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Medchal Integrated College – Launch Control Center (v2)</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    :root{
-      --bg-start:#e3f2fd;--bg-end:#ffffff;
-      --panel:#ffffff;--card:#ffffff;--muted:#546e7a;--text:#0d47a1;
-      --accent:#03a9f4;--green:#00c853;--amber:#ffab00;--rose:#f50057;--violet:#651fff;--blue:#2979ff;
-      --ok:#00c853;--warn:#ffab00;--bad:#f50057;
-      --border-light:#bbdefb;--border-dark:#90caf9;
-      --text-light:#ffffff;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";background:linear-gradient(180deg, var(--bg-start), var(--bg-end));color:var(--text); line-height:1.5;}
-    header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.7));backdrop-filter:blur(8px);border-bottom:1px solid var(--border-light)}
-    .wrap{max-width:1200px;margin:0 auto;padding:16px}
-    h1{font-size:22px;margin:0 0 6px; color: var(--blue);}
-    .sub{color:var(--muted);font-size:13px}
-    .panel{background:var(--panel);border:1px solid var(--border-light);border-radius:16px;padding:14px;margin:16px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);}
-    .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-    .badge{padding:6px 12px;border-radius:999px;font-size:12px;border:1px solid var(--border-light);background:var(--bg-start); color: var(--text);}
-    .btn{background:linear-gradient(45deg, var(--blue), var(--accent));border:0;color:var(--text-light);padding:8px 14px;border-radius:10px;font-weight:600;cursor:pointer; transition: transform 0.2s ease;}
-    .btn:hover{transform: scale(1.05);}
-    .btn.secondary{background:transparent;color:var(--blue);border:1px solid var(--border-light)}
-    .grid{display:grid;grid-template-columns:260px 1fr;gap:12px}
-    .left{background:var(--card);border:1px solid var(--border-light);border-radius:14px;padding:8px}
-    .right{background:var(--card);border:1px solid var(--border-light);border-radius:14px;overflow:auto}
-    .legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
-    .legend .item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
-    .swatch{width:12px;height:12px;border-radius:3px}
-    .row{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px dashed var(--border-light)}
-    .row:last-child{border-bottom:0}
-    .row small{color:#78909c}
-    .sticky-head{position:sticky;top:0;background:var(--bg-start);border-bottom:1px solid var(--border-light);padding:6px 8px;z-index:5; font-weight: 600;}
-    svg{display:block}
-    .tooltip{position:fixed;pointer-events:none;background:var(--text);border:1px solid var(--border-dark);color:var(--text-light);padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.2;box-shadow:0 8px 20px rgba(0,0,0,.2);opacity:0;transform:translateY(6px);transition:opacity .12s ease, transform .12s ease}
-    .pill{display:inline-block;padding:2px 6px;border-radius:999px;font-size:11px;margin-left:6px;color:var(--text-light)}
-    .notice{font-size:12px;color:var(--muted)}
-    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
-    .kpi .card{background:var(--bg-start);border:1px solid var(--border-light);border-radius:10px;padding:10px}
-    .kpi .label{font-size:11px;color:var(--muted)}
-    .kpi .value{font-size:18px;font-weight:700; color:var(--blue);}
-    .filter{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
-    .filter label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text)}
-    .scale{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-    .section-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .canvas-card{background:var(--panel);border:1px solid var(--border-light);border-radius:14px;padding:14px;margin-top:10px}
+import React, { useMemo, useRef, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList } from "recharts";
+import { Calendar, Calculator, Download, GitBranch, Layers } from "lucide-react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
-    /* Financial Simulator */
-    .sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .sim-controls{display:grid;gap:10px}
-    .field{display:grid;gap:6px}
-    .field label{font-size:12px;color:var(--text)}
-    input[type="range"]{width:100%}
-    input[type="number"]{background:var(--bg-start);border:1px solid var(--border-light);color:var(--text);border-radius:8px;padding:8px}
-    .result{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px}
-    .result .card{background:var(--bg-start);border:1px solid var(--border-light);border-radius:10px;padding:10px}
-    .result .label{font-size:11px;color:var(--muted)}
-    .result .value{font-size:18px;font-weight:700}
-    .range-wrap{position:relative}
-    .breakeven-tick{position:absolute;top:10px;width:2px;height:18px;background:var(--rose);transform:translateX(-1px)}
-    .breakeven-tag{position:absolute;top:-10px;font-size:10px;color:var(--rose);transform:translateX(-50%)}
-    .slot-row{display:flex;gap:8px;margin-top:10px}
-    .slot{background:var(--bg-start);border:1px solid var(--border-light);padding:8px;border-radius:8px}
-    .note-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--panel);border:1px solid var(--border-dark);padding:12px;border-radius:10px;z-index:40;width:420px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);}
-    .note-modal textarea{width:100%;height:120px;background:var(--bg-start);color:var(--text);border:1px solid var(--border-light);padding:8px;border-radius:6px}
-    .note-icon{font-size:12px;color:var(--amber);margin-left:8px}
-    canvas{max-width:100%}
+// --------------------
+// Helpers & Constants
+// --------------------
+const months = ["Nov 2025","Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026","May 2026","Jun 2026"]; // Year‑1 launch window
+const startBase = new Date("2025-11-01T00:00:00");
+const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+const toIdx = (iso) => clamp(((new Date(iso+"T00:00:00").getFullYear()-startBase.getFullYear())*12) + (new Date(iso+"T00:00:00").getMonth()-startBase.getMonth()),0,7);
+const span = (sISO, eISO) => Math.max(1, toIdx(eISO) - toIdx(sISO) + 1);
+const fmt1 = (v) => (isFinite(v) ? Number(v).toFixed(1) : "—"); // 1 decimal everywhere
 
-    @media (max-width:900px){
-      .grid{grid-template-columns:1fr}
-      .sim-grid{grid-template-columns:1fr}
-      .result{grid-template-columns:repeat(2,1fr)}
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="wrap">
-      <h1>Interactive Gantt & Financials – Integrated Intermediate College (Medchal)</h1>
-      <div class="sub">Launch <strong>March 2026</strong> • Target <strong>200 students (Y1)</strong> • Tracks: Approvals, Infrastructure, Academics, Hiring, Marketing, Admissions</div>
-    </div>
-  </header>
+// --------------------
+// Color Key
+// --------------------
+const COLORS = { Compliance: "#E53935", Infra: "#7E57C2", Academic: "#1E88E5", Tech: "#43A047", Marketing: "#FB8C00" };
 
-  <main class="wrap">
-    <section class="panel">
-      <div class="section-title">
-        <div class="controls">
-          <span class="badge">Timespan: <strong>Aug 2025 → Mar 2027</strong></span>
-          <div class="scale">
-            <button class="btn secondary" id="zoomOut">−</button>
-            <span class="badge" id="scaleLabel">Scale: 36px / month</span>
-            <button class="btn secondary" id="zoomIn">+</button>
-          </div>
-          <button class="btn" id="printBtn">Print / Save PDF</button>
-        </div>
-        <div>
-          <div style="margin-top:8px">
-            <label class="badge">Phase Filter:</label>
-            <button class="btn secondary" id="phaseAll">All</button>
-            <button class="btn secondary" id="phasePlanning">Planning</button>
-            <button class="btn secondary" id="phaseRecruit">Recruitment</button>
-            <button class="btn secondary" id="phasePrelaunch">Pre‑Launch</button>
-            <button class="btn secondary" id="phaseLaunch">Launch</button>
-            <button class="btn secondary" id="phaseStab">Stabilization</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="legend">
-        <div class="item"><span class="swatch" style="background:var(--accent)"></span> Approvals & Compliance</div>
-        <div class="item"><span class="swatch" style="background:var(--blue)"></span> Infrastructure</div>
-        <div class="item"><span class="swatch" style="background:var(--green)"></span> Academics & Content</div>
-        <div class="item"><span class="swatch" style="background:var(--amber)"></span> Hiring & Training</div>
-        <div class="item"><span class="swatch" style="background:var(--rose)"></span> Marketing & Admissions</div>
-      </div>
-
-      <div class="filter" id="filters"></div>
-      <div class="kpi">
-        <div class="card"><div class="label">Total Tasks</div><div class="value" id="kpiTasks">–</div></div>
-        <div class="card"><div class="label">Open Now</div><div class="value" id="kpiOpen">–</div></div>
-        <div class="card"><div class="label">Critical (Launch‑blocking)</div><div class="value" id="kpiCritical">–</div></div>
-        <div class="card"><div class="label">On‑time Probability</div><div class="value" id="kpiOTP">–</div></div>
-      </div>
-
-      <section class="grid" id="ganttGrid">
-        <aside class="left">
-          <div class="sticky-head">Tasks</div>
-          <div id="taskList"></div>
-        </aside>
-        <section class="right">
-          <div class="sticky-head" id="timelineHead"></div>
-          <div id="chart"></div>
-        </section>
-      </section>
-
-      <p class="notice">Tip: Use the filters to focus on a specific track; zoom to adjust month width. Click a task to add/view notes. Print to save as PDF for investor updates.</p>
-    </section>
-
-    <section class="panel">
-      <div class="section-title">
-        <h2 style="margin:0;font-size:18px">OPEX Allocation – Scenario Comparison</h2>
-        <div class="controls">
-          <label class="badge">Select Budget:
-            <select id="budgetSelect" style="margin-left:6px;background:var(--bg-start);color:var(--text);border:1px solid var(--border-light);border-radius:8px;padding:6px">
-              <option value="150">₹1.5 Cr</option>
-              <option value="160">₹1.6 Cr</option>
-              <option value="210" selected>₹2.1 Cr</option>
-            </select>
-          </label>
-          <span class="badge" id="budgetNote">Using ₹2.1 Cr OPEX</span>
-        </div>
-      </div>
-      <div class="canvas-card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-        <div style="flex:1"><canvas id="opexChart" height="160"></canvas></div>
-        <div style="width:320px"><canvas id="opexPie" height="160"></canvas></div>
-      </div>
-      <p class="notice">Values shown in <strong>₹ Lakhs</strong>. Changing budget updates the Financial Simulator's fixed expenses automatically.</p>
-    </section>
-
-    <section class="panel">
-      <div class="section-title">
-        <h2 style="margin:0;font-size:18px">Intake, Fees & Breakeven Simulator</h2>
-      </div>
-
-      <div class="sim-grid">
-        <div class="sim-controls">
-          <div class="field">
-            <label>Students</label>
-            <div class="range-wrap" id="studentsWrap">
-              <input type="range" id="students" min="150" max="300" step="10" value="200" />
-              <div class="breakeven-tick" id="beTick" style="display:none"></div>
-              <div class="breakeven-tag" id="beTag" style="display:none">BREAKEVEN</div>
-            </div>
-            <div class="badge" id="studentsVal">200</div>
-          </div>
-          <div class="field">
-            <label>Fee per Student (₹ Lakhs)</label>
-            <input type="range" id="fee" min="1" max="2.5" step="0.05" value="1.20" />
-            <div class="badge" id="feeVal">1.20</div>
-          </div>
-          <div class="field">
-            <label>Variable Cost per Student (₹ Lakhs) — test series, transport subsidy, etc.</label>
-            <input type="range" id="varCost" min="0.10" max="0.40" step="0.01" value="0.20" />
-            <div class="badge" id="varVal">0.20</div>
-          </div>
-          <div class="field">
-            <label>Scholarship / Discount (%)</label>
-            <input type="range" id="disc" min="0" max="25" step="1" value="5" />
-            <div class="badge" id="discVal">5%</div>
-          </div>
-          <div class="field">
-            <label>Fixed Expenses (OPEX in ₹ Lakhs) — driven by budget above</label>
-            <input type="number" id="fixed" value="210" />
-          </div>
-
-          <div style="margin-top:10px">
-            <div style="display:flex;gap:8px;align-items:center">
-              <button class="btn" id="saveA">Save to Slot A</button>
-              <button class="btn" id="saveB">Save to Slot B</button>
-              <button class="btn" id="compareSlots">Compare Slots</button>
-              <button class="btn secondary" id="clearSlots">Clear Slots</button>
-            </div>
-            <div class="slot-row">
-              <div class="slot" id="slotA">Slot A: <em>empty</em></div>
-              <div class="slot" id="slotB">Slot B: <em>empty</em></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="canvas-card">
-          <canvas id="finChart" height="160"></canvas>
-          <div class="result">
-            <div class="card"><div class="label">Gross Revenue</div><div class="value" id="revGross">–</div></div>
-            <div class="card"><div class="label">Net Revenue (after discount)</div><div class="value" id="revNet">–</div></div>
-            <div class="card"><div class="label">Total Expenses</div><div class="value" id="expTotal">–</div></div>
-            <div class="card"><div class="label">Profit / (Loss)</div><div class="value" id="profit">–</div></div>
-            <div class="card"><div class="label">Profit Margin</div><div class="value" id="margin">–</div></div>
-            <div class="card"><div class="label">Breakeven Students</div><div class="value" id="beStudents">–</div></div>
-            <div class="card"><div class="label">Per-student Contribution</div><div class="value" id="contrib">–</div></div>
-            <div class="card"><div class="label">Headroom vs Breakeven</div><div class="value" id="headroom">–</div></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <p class="notice">All financials in <strong>₹ Lakhs</strong> unless specified. 100 Lakhs = ₹1 Cr.</p>
-  </main>
-
-  <div class="tooltip" id="tooltip"></div>
-
-  <div id="noteModal" class="note-modal" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <strong id="noteTitle">Task Note</strong>
-      <button id="closeNote" class="btn secondary">Close</button>
-    </div>
-    <textarea id="noteText" placeholder="Write notes for this task (e.g., vendor contact, delay reason)"></textarea>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
-      <button id="saveNote" class="btn">Save Note</button>
-      <button id="deleteNote" class="btn secondary">Delete</button>
-    </div>
-  </div>
-
-<script>
-// =========================
-// A) INTERACTIVE GANTT
-// =========================
-const START = new Date(2025, 7, 1); // Aug 1, 2025
-const END   = new Date(2027, 2, 1); // Mar 1, 2027
-
-const TRACKS = {
-  approvals:   { label: 'Approvals & Compliance', color: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() },
-  infra:       { label: 'Infrastructure',          color: getComputedStyle(document.documentElement).getPropertyValue('--blue').trim() },
-  academics:   { label: 'Academics & Content',     color: getComputedStyle(document.documentElement).getPropertyValue('--green').trim() },
-  hiring:      { label: 'Hiring & Training',       color: getComputedStyle(document.documentElement).getPropertyValue('--amber').trim() },
-  marketing:   { label: 'Marketing & Admissions',  color: getComputedStyle(document.documentElement).getPropertyValue('--rose').trim() },
-};
-
+// --------------------
+// Year‑1 Very‑Detailed Tasks
+// --------------------
 const TASKS = [
-  { id:'aff1', name:'Legal entity & compliance framework', owner:'Admin Head', start:'2025-03-01', end:'2025-04-15', track:'approvals', critical:true, phase:'Planning' },
-  { id:'aff2', name:'Telangana Board Affiliation – application & inspections', owner:'Principal', start:'2025-04-10', end:'2025-08-31', track:'approvals', critical:true, phase:'Planning' },
-  { id:'aff3', name:'Safety & fire NOC, lab compliance', owner:'Admin Head', start:'2025-06-01', end:'2025-08-15', track:'approvals', critical:true, phase:'Planning' },
-
-  { id:'inf1', name:'Campus lease & layout finalization (Medchal)', owner:'Founder', start:'2025-03-15', end:'2025-04-30', track:'infra', critical:true, phase:'Planning' },
-  { id:'inf2', name:'Civil fit‑out (classrooms, labs, library)', owner:'Vendor', start:'2025-05-01', end:'2025-11-15', track:'infra', critical:true, phase:'Planning' },
-  { id:'inf3', name:'Furniture & smart‑class install', owner:'Vendor', start:'2025-09-01', end:'2025-12-10', track:'infra', critical:false, phase:'Pre-Launch' },
-  { id:'inf4', name:'IT / LMS / EDP setup & testing', owner:'IT Lead', start:'2025-12-01', end:'2026-01-20', track:'infra', critical:true, phase:'Pre-Launch' },
-
-  { id:'ac1', name:'Recruit core faculty (PCM + Bio)', owner:'Founder', start:'2025-09-01', end:'2025-10-15', track:'academics', critical:true, phase:'Recruitment' },
-  { id:'ac2', name:'Syllabus mapping (Boards + JEE/NEET) & timetable', owner:'Academic Coord.', start:'2025-10-01', end:'2025-11-15', track:'academics', critical:true, phase:'Recruitment' },
-  { id:'ac3', name:'Content: Notes, DPPs, Test Series (Y1 set)', owner:'HODs', start:'2025-10-15', end:'2026-01-15', track:'academics', critical:true, phase:'Pre-Launch' },
-  { id:'ac4', name:'Faculty induction & pedagogy workshops', owner:'Principal', start:'2025-11-20', end:'2026-01-10', track:'academics', critical:false, phase:'Pre-Launch' },
-
-  { id:'hr1', name:'Ops/Admin hiring (Admin + Accounts + Frontdesk)', owner:'Admin Head', start:'2025-12-01', end:'2026-01-05', track:'hiring', critical:true, phase:'Recruitment' },
-  { id:'hr2', name:'Sales team hiring (1 counselor + 1 field exec)', owner:'Admissions', start:'2026-01-01', end:'2026-01-20', track:'hiring', critical:true, phase:'Pre-Launch' },
-  { id:'hr3', name:'Support staff onboarding (outsourced)', owner:'Admin', start:'2026-02-01', end:'2026-02-20', track:'hiring', critical:false, phase:'Pre-Launch' },
-
-  { id:'mk1', name:'Branding, website & creatives', owner:'Mktg', start:'2025-10-15', end:'2025-12-10', track:'marketing', critical:false, phase:'Pre-Launch' },
-  { id:'mk2', name:'Admission test campaign (digital‑first)', owner:'Mktg', start:'2026-01-05', end:'2026-02-28', track:'marketing', critical:true, phase:'Launch' },
-  { id:'mk3', name:'School outreach & seminars', owner:'Field Exec', start:'2026-01-10', end:'2026-02-25', track:'marketing', critical:true, phase:'Launch' },
-  { id:'mk4', name:'Orientation & batch launch (200 seats)', owner:'Principal', start:'2026-03-01', end:'2026-03-07', track:'marketing', critical:true, phase:'Launch' },
-
-  { id:'yz1', name:'Feedback loop & schedule optimization', owner:'Academic Coord.', start:'2026-04-01', end:'2026-06-30', track:'academics', critical:false, phase:'Stabilization' },
-  { id:'yz2', name:'Year‑2 admissions cycle prep', owner:'Admissions', start:'2026-09-01', end:'2026-12-31', track:'marketing', critical:false, phase:'Stabilization' },
-  { id:'yz3', name:'Add librarian + admin (Y2)', owner:'Admin', start:'2026-09-15', end:'2026-10-15', track:'hiring', critical:false, phase:'Stabilization' },
+  { task: "Affiliation Application Filed", start: "2025-09-01", end: "2026-01-31", cat: "Compliance", owner: "Compliance Advisor" },
+  { task: "Affiliation Approval & NOC", start: "2026-02-01", end: "2026-05-31", cat: "Compliance", owner: "Compliance Advisor" },
+  { task: "Campus Lease & Deposit", start: "2026-01-01", end: "2026-01-31", cat: "Infra", owner: "COO" },
+  { task: "Fit‑out & Interiors", start: "2026-02-01", end: "2026-05-15", cat: "Infra", owner: "COO" },
+  { task: "Lab Setup & Furniture", start: "2026-03-01", end: "2026-05-31", cat: "Infra", owner: "COO" },
+  { task: "IT/CBT Infra Installation", start: "2026-04-01", end: "2026-05-31", cat: "Infra", owner: "COO" },
+  { task: "Curriculum Map (IPE + JEE/NEET)", start: "2025-12-01", end: "2026-02-15", cat: "Academic", owner: "Academic Director" },
+  { task: "Core Faculty Hiring (PCM+B)", start: "2026-02-01", end: "2026-03-31", cat: "Academic", owner: "Academic Director" },
+  { task: "Faculty Induction & Pedagogy", start: "2026-04-01", end: "2026-05-15", cat: "Academic", owner: "Academic Director" },
+  { task: "Mentors & TAs Hiring", start: "2026-04-01", end: "2026-05-31", cat: "Academic", owner: "Academic Director" },
+  { task: "App MVP (Practice Engine)", start: "2025-11-01", end: "2026-01-31", cat: "Tech", owner: "EdTech PM" },
+  { task: "Leaderboard & Rank Predictor", start: "2026-01-01", end: "2026-03-31", cat: "Tech", owner: "EdTech PM" },
+  { task: "CBT Module Integration", start: "2026-04-01", end: "2026-06-15", cat: "Tech", owner: "EdTech PM" },
+  { task: "Marketing Microsite Launch", start: "2025-12-01", end: "2026-01-15", cat: "Marketing", owner: "Sales & Marketing Head" },
+  { task: "Scholarship Test #1 (Online)", start: "2026-01-15", end: "2026-01-31", cat: "Marketing", owner: "Sales & Marketing Head" },
+  { task: "School Seminars & Outreach", start: "2026-02-01", end: "2026-03-31", cat: "Marketing", owner: "Sales & Marketing Head" },
+  { task: "Parent Counselling Sessions", start: "2026-03-01", end: "2026-05-31", cat: "Marketing", owner: "Sales & Marketing Head" },
+  { task: "Scholarship Test #2 (Offline)", start: "2026-04-01", end: "2026-04-15", cat: "Marketing", owner: "Sales & Marketing Head" },
+  { task: "Admissions Finalization", start: "2026-04-01", end: "2026-05-31", cat: "Marketing", owner: "Sales & Marketing Head" },
+  { task: "Orientation (Parents & Students)", start: "2026-06-01", end: "2026-06-07", cat: "Academic", owner: "Academic Director" },
+  { task: "Classes Commence", start: "2026-06-08", end: "2026-06-30", cat: "Academic", owner: "Academic Director" },
 ];
 
-let MONTH_WIDTH = 36;
-let filters = new Set(Object.keys(TRACKS));
-let phaseFilter = 'All';
-
-const msPerDay = 24*3600*1000;
-function monthDiff(a,b){ return (b.getFullYear()-a.getFullYear())*12 + (b.getMonth()-a.getMonth()); }
-function toDate(str){ const [y,m,d]=str.split('-').map(Number); return new Date(y, m-1, d||1); }
-function clamp(v,min,max){ return Math.max(min, Math.min(max,v)); }
-function xFromDate(date){ const m = monthDiff(START, date); return m*MONTH_WIDTH; }
-function widthFromRange(s,e){ const md = monthDiff(s,e)+1; return md*MONTH_WIDTH - 6; }
-function fmt(d){ return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'2-digit'}); }
-
-const NOTES_KEY = 'projectA_task_notes_v1';
-let notes = {};
-try{ notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}'); }catch(e){ notes = {}; }
-
-const taskListEl = document.getElementById('taskList');
-const chartEl = document.getElementById('chart');
-const headEl = document.getElementById('timelineHead');
-const tooltip = document.getElementById('tooltip');
-const filtersEl = document.getElementById('filters');
-const kpiTasks = document.getElementById('kpiTasks');
-const kpiOpen = document.getElementById('kpiOpen');
-const kpiCritical = document.getElementById('kpiCritical');
-const kpiOTP = document.getElementById('kpiOTP');
-const scaleLabel = document.getElementById('scaleLabel');
-
-function buildFilters(){
-  filtersEl.innerHTML = '';
-  Object.entries(TRACKS).forEach(([k,v])=>{
-    const id = `f_${k}`;
-    const lbl = document.createElement('label');
-    lbl.innerHTML = `<input type="checkbox" id="${id}" checked> ${v.label}`;
-    lbl.querySelector('input').addEventListener('change', (e)=>{ if(e.target.checked) filters.add(k); else filters.delete(k); render(); });
-    filtersEl.appendChild(lbl);
-  });
-}
-
-function buildLeft(list){
-  taskListEl.innerHTML='';
-  list.forEach(t=>{
-    const row = document.createElement('div');
-    row.className='row';
-    const pillColor = TRACKS[t.track].color;
-    const noteMark = notes[t.id] ? `<span class="note-icon">📝</span>` : '';
-    row.innerHTML = `<div style="flex:1">
-      <div style="display:flex;align-items:center;justify-content:space-between"><div>${t.name}${t.critical?`<span class="pill" style="background:${pillColor};">Critical</span>`:''}</div><div>${noteMark}</div></div>
-      <small>${t.owner} · ${t.phase}</small>
-    </div>`;
-    row.addEventListener('click', ()=> openNoteEditor(t.id, t.name));
-    taskListEl.appendChild(row);
-  });
-}
-
-function buildHead(){
-  const months = monthDiff(START, END)+1;
-  const svgW = months*MONTH_WIDTH + 40;
-  const h = 40; let x=0; const y=0;
-  let svg = `<svg width="${svgW}" height="${h}">`;
-  const borderLight = getComputedStyle(document.documentElement).getPropertyValue('--border-light').trim();
-  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
-  for(let i=0;i<months;i++){
-    const dt = new Date(START.getFullYear(), START.getMonth()+i, 1);
-    const label = dt.toLocaleDateString(undefined,{year:'2-digit',month:'short'});
-    svg += `<g transform="translate(${x},${y})">
-      <rect x="0" y="0" width="${MONTH_WIDTH}" height="${h}" fill="transparent" stroke="${borderLight}" />
-      <text x="${MONTH_WIDTH/2}" y="24" fill="${textColor}" font-size="12" text-anchor="middle">${label}</text>
-    </g>`;
-    x+=MONTH_WIDTH;
+// --------------------
+// Finance Utils (Lakhs)
+// --------------------
+const irr = (cfs, guess = 0.2) => {
+  let r = guess;
+  for (let i = 0; i < 60; i++) {
+    let npv = 0, d = 0;
+    for (let t = 0; t < cfs.length; t++) { npv += cfs[t] / Math.pow(1 + r, t); d += (-t * cfs[t]) / Math.pow(1 + r, t + 1); }
+    const nr = r - npv / d; if (!isFinite(nr)) break; if (Math.abs(nr - r) < 1e-7) return r; r = Math.max(-0.99, nr);
   }
-  svg += `</svg>`;
-  headEl.innerHTML = svg;
-}
-
-function buildChart(list){
-  const rowH = 32, gap=8; const totalH = list.length*(rowH+gap)+20;
-  const months = monthDiff(START, END)+1;
-  const svgW = months*MONTH_WIDTH + 40;
-  let svg = `<svg width="${svgW}" height="${totalH}">`;
-
-  list.forEach((t,idx)=>{
-    const s = toDate(t.start), e = toDate(t.end);
-    const x = xFromDate(s)+3; const w = clamp(widthFromRange(s,e), 12, 20000);
-    const y = idx*(rowH+gap)+8; const r=6;
-    const color = TRACKS[t.track].color;
-    svg += `
-      <g class="bar" data-id="${t.id}" data-name="${t.name}" data-owner="${t.owner}" data-start="${fmt(s)}" data-end="${fmt(e)}" data-track="${TRACKS[t.track].label}" data-phase="${t.phase}" data-critical="${t.critical?'Yes':'No'}">
-        <rect x="${x}" y="${y-2}" rx="${r}" ry="${r}" width="${w}" height="${rowH-8}" fill="${color}" />
-        <text x="${x+8}" y="${y+16}" fill="#fff" font-weight="600" font-size="12">${t.name}</text>
-      </g>`;
-  });
-
-  svg += `</svg>`;
-  chartEl.innerHTML = svg;
-
-  chartEl.querySelectorAll('.bar').forEach(el=>{
-    el.addEventListener('mousemove', (e)=>{
-      const ds = el.dataset;
-      tooltip.innerHTML = `<strong>${ds.name}</strong><br>${ds.track} · ${ds.phase} · Owner: ${ds.owner}<br>${ds.start} → ${ds.end}${ds.critical==='Yes'?' · <em>Critical</em>':''}`;
-      tooltip.style.left = (e.clientX+12)+'px';
-      tooltip.style.top  = (e.clientY+12)+'px';
-      tooltip.style.opacity = 1; tooltip.style.transform='translateY(0)';
-    });
-    el.addEventListener('mouseleave', ()=>{ tooltip.style.opacity = 0; tooltip.style.transform='translateY(6px)'; });
-    el.addEventListener('click', ()=> openNoteEditor(el.dataset.id, el.dataset.name));
-  });
-}
-
-function computeKPIs(list){
-  kpiTasks.textContent = list.length;
-  const now = new Date();
-  const open = list.filter(t=> toDate(t.start) <= now && now <= toDate(t.end)).length; kpiOpen.textContent = open;
-  const critical = list.filter(t=> t.critical).length; kpiCritical.textContent = critical;
-  const remainingCritical = list.filter(t=> t.critical && toDate(t.end) > now).length;
-  const otp = clamp(100 - Math.round((remainingCritical/Math.max(critical,1))*40), 40, 98);
-  kpiOTP.textContent = otp + '%';
-}
-
-function render(){
-  const list = TASKS.filter(t=> filters.has(t.track));
-  const phaseFiltered = list.filter(t=> phaseFilter==='All' ? true : t.phase===phaseFilter);
-  buildLeft(phaseFiltered); buildHead(); buildChart(phaseFiltered); computeKPIs(phaseFiltered);
-  scaleLabel.textContent = `Scale: ${MONTH_WIDTH}px / month`;
-}
-
-buildFilters(); render();
-
-document.getElementById('zoomIn').onclick = ()=>{ MONTH_WIDTH = clamp(MONTH_WIDTH+6, 18, 96); render(); };
-document.getElementById('zoomOut').onclick = ()=>{ MONTH_WIDTH = clamp(MONTH_WIDTH-6, 18, 96); render(); };
-document.getElementById('printBtn').onclick = ()=> printWithCover();
-
-['All','Planning','Recruitment','Pre-Launch','Launch','Stabilization'].forEach(p=>{
-  const id = p==='All' ? 'phaseAll' : `phase${p.replace(/\W/g,'')}`;
-  const btn = document.getElementById(id);
-  if(btn){ btn.addEventListener('click', ()=>{ phaseFilter = p==='All'?'All':p; render(); }); }
-});
-
-// =========================
-// B) OPEX vs BUDGET (Chart.js)
-// =========================
-const opexCtx = document.getElementById('opexChart');
-const pieCtx = document.getElementById('opexPie').getContext('2d');
-const budgetSelect = document.getElementById('budgetSelect');
-const budgetNote = document.getElementById('budgetNote');
-
-const OPEX_SCENES = {
-  150: { Faculty:80, Infra:30, Marketing:20, Admin:20 },
-  160: { Faculty:88, Infra:32, Marketing:22, Admin:18 },
-  210: { Faculty:110, Infra:40, Marketing:30, Admin:30 }
+  return r;
 };
-const CHART_COLORS = [
-    getComputedStyle(document.documentElement).getPropertyValue('--green').trim(),
-    getComputedStyle(document.documentElement).getPropertyValue('--blue').trim(),
-    getComputedStyle(document.documentElement).getPropertyValue('--amber').trim(),
-    getComputedStyle(document.documentElement).getPropertyValue('--violet').trim()
-];
 
-function buildOpexData(scene){
-  const cat = ['Faculty','Infra','Marketing','Admin'];
-  return {
-    labels: cat,
-    datasets: [{
-      label: `Allocation (₹ Lakhs)`,
-      data: cat.map(k=> scene[k]),
-      backgroundColor: CHART_COLORS
-    }]
+const metrics = ({students, fee, scholarshipPct, variable, fixed, capex, growth}) => {
+  const netFee = fee * (1 - scholarshipPct/100);
+  const grossRevenue = fee * students;
+  const netRevenue = netFee * students;
+  const variableCosts = variable * students;
+  const totalExpenses = fixed + variableCosts;
+  const profit = netRevenue - totalExpenses;
+  const margin = netRevenue > 0 ? (profit/netRevenue)*100 : 0;
+  const contribution = netFee - variable;
+  const be = contribution > 0 ? Math.ceil(fixed / contribution) : Infinity;
+  const roi = capex>0? (profit/capex)*100 : 0;
+  const payback = profit>0? (capex/profit) : Infinity;
+  const p1 = profit, p2 = profit*(1+growth/100), p3 = p2*(1+growth/100);
+  const irrPct = irr([-capex, p1, p2, p3]) * 100;
+  return {netFee,grossRevenue,netRevenue,variableCosts,totalExpenses,profit,margin,contribution,be,roi,payback,irrPct};
+};
+
+export default function LaunchControl() {
+  // Inputs (Lakhs)
+  const [students, setStudents] = useState(200);
+  const [fee, setFee] = useState(1.05);
+  const [scholarshipPct, setScholarshipPct] = useState(5);
+  const [variablePerStudent, setVariablePerStudent] = useState(0.10);
+  const [fixedOpex, setFixedOpex] = useState(150);
+  const [capex, setCapex] = useState(150);
+  const [growth, setGrowth] = useState(20);
+  const [scaleFixed, setScaleFixed] = useState(false); // scale fixed OPEX with scenario size?
+
+  const containerRef = useRef(null);
+
+  const applyPreset = (name) => {
+    if (name === "Lean 1.5 Cr") { setFixedOpex(150); setFee(1.05); setVariablePerStudent(0.10); setScholarshipPct(5); }
+    if (name === "PDF 2.1 Cr") { setFixedOpex(210); setFee(1.20); setVariablePerStudent(0.20); setScholarshipPct(5); }
   };
-}
 
-let opexChart = new Chart(opexCtx, {
-  type: 'bar',
-  data: buildOpexData(OPEX_SCENES[+budgetSelect.value]),
-  options: {
-    responsive:true,
-    plugins:{ legend:{ display:false }, title:{ display:true, text:'OPEX Allocation by Category (₹ Lakhs)', color: '#0d47a1' } },
-    scales:{ y:{ beginAtZero:true, ticks:{ color:'#546e7a' }, grid:{ color:'#e3f2fd' } }, x:{ ticks:{ color:'#546e7a' }, grid:{ color:'#e3f2fd' } } }
-  }
-});
+  // Base metrics
+  const base = useMemo(() => metrics({students, fee, scholarshipPct, variable: variablePerStudent, fixed: fixedOpex, capex, growth}), [students, fee, scholarshipPct, variablePerStudent, fixedOpex, capex, growth]);
 
-let pieChart = new Chart(pieCtx, {
-  type:'pie',
-  data: { labels: [], datasets:[{ data:[], backgroundColor:CHART_COLORS }] },
-  options:{ plugins:{ legend:{ position:'bottom', labels: {color: '#0d47a1'} } } }
-});
-
-function setBudgetNote(v){ budgetNote.textContent = `Using ₹${v} Lakhs (₹${(v/100).toFixed(2)} Cr) OPEX`; }
-setBudgetNote(+budgetSelect.value);
-
-budgetSelect.addEventListener('change', ()=>{
-  const v = +budgetSelect.value;
-  opexChart.data = buildOpexData(OPEX_SCENES[v]);
-  opexChart.update();
-  pieChart.data.labels = Object.keys(OPEX_SCENES[v]);
-  pieChart.data.datasets[0].data = Object.values(OPEX_SCENES[v]);
-  pieChart.update();
-  setBudgetNote(v);
-  document.getElementById('fixed').value = v;
-  updateFinance();
-});
-
-pieChart.data.labels = Object.keys(OPEX_SCENES[+budgetSelect.value]);
-pieChart.data.datasets[0].data = Object.values(OPEX_SCENES[+budgetSelect.value]);
-pieChart.update();
-
-// =========================
-// C) FINANCIAL SIMULATOR
-// =========================
-const elStudents = document.getElementById('students');
-const elFee = document.getElementById('fee');
-const elVar = document.getElementById('varCost');
-const elDisc = document.getElementById('disc');
-const elFixed = document.getElementById('fixed');
-
-const outStudents = document.getElementById('studentsVal');
-const outFee = document.getElementById('feeVal');
-const outVar = document.getElementById('varVal');
-const outDisc = document.getElementById('discVal');
-
-const revGross = document.getElementById('revGross');
-const revNet = document.getElementById('revNet');
-const expTotal = document.getElementById('expTotal');
-const profit = document.getElementById('profit');
-const margin = document.getElementById('margin');
-const beStudents = document.getElementById('beStudents');
-const contrib = document.getElementById('contrib');
-const headroom = document.getElementById('headroom');
-
-const beTick = document.getElementById('beTick');
-const beTag = document.getElementById('beTag');
-const studentsWrap = document.getElementById('studentsWrap');
-
-const finCtx = document.getElementById('finChart');
-let finChart;
-
-let slotA = null, slotB = null;
-const slotAel = document.getElementById('slotA');
-const slotBel = document.getElementById('slotB');
-
-function fmtLakhs(n){ return `₹ ${n.toLocaleString('en-IN', { maximumFractionDigits: 2 })} L`; }
-function fmtCr(n){ return `₹ ${(n/100).toFixed(2)} Cr`; }
-
-function updateBreakevenTick(be, min, max){
-  const pct = (be - min) / (max - min);
-  const rel = pct * elStudents.offsetWidth;
-  beTick.style.left = rel + 'px';
-  beTag.style.left = rel + 'px';
-  beTick.style.display = 'block';
-  beTag.style.display = 'block';
-  beTag.textContent = `BREAKEVEN (${be})`;
-}
-
-function computeMetrics(students, fee, varCost, discPct, fixed){
-  const gross = students * fee;
-  const netFeePerStudent = fee * (1 - discPct/100);
-  const netRevenue = students * netFeePerStudent;
-  const variableTotal = students * varCost;
-  const totalExpenses = fixed + variableTotal;
-  const pnl = netRevenue - totalExpenses;
-  const perStudentContribution = netFeePerStudent - varCost;
-  let be = 'N/A'; if (perStudentContribution>0) be = Math.ceil(fixed / perStudentContribution);
-  return { gross, netRevenue, variableTotal, totalExpenses, pnl, perStudentContribution, be };
-}
-
-function updateFinance(){
-  const students = +elStudents.value;
-  const fee = +elFee.value;
-  const varCost = +elVar.value;
-  const discPct = +elDisc.value;
-  const fixed = +elFixed.value;
-
-  outStudents.textContent = students;
-  outFee.textContent = fee.toFixed(2);
-  outVar.textContent = varCost.toFixed(2);
-  outDisc.textContent = discPct + '%';
-
-  const m = computeMetrics(students, fee, varCost, discPct, fixed);
-
-  revGross.textContent = fmtLakhs(m.gross) + ` (${fmtCr(m.gross)})`;
-  revNet.textContent   = fmtLakhs(m.netRevenue) + ` (${fmtCr(m.netRevenue)})`;
-  expTotal.textContent = fmtLakhs(m.totalExpenses) + ` (${fmtCr(m.totalExpenses)})`;
-  profit.textContent   = fmtLakhs(m.pnl) + ` (${fmtCr(m.pnl)})`;
-  const marginPct = m.netRevenue>0 ? ((m.pnl/m.netRevenue)*100).toFixed(1)+'%' : '–';
-  margin.textContent = marginPct;
-  beStudents.textContent = (m.be==='N/A')? 'N/A' : `${m.be} students`;
-  contrib.textContent = fmtLakhs(m.perStudentContribution);
-  headroom.textContent = (m.be==='N/A')? 'N/A' : `${students - m.be} students`;
-
-  if (m.be==='N/A'){ beTick.style.display='none'; beTag.style.display='none'; }
-  else{ updateBreakevenTick(m.be, +elStudents.min, +elStudents.max); }
-
-  const revCr = m.netRevenue/100;
-  const expCr = m.totalExpenses/100;
-  if (finChart) finChart.destroy();
-  finChart = new Chart(finCtx, {
-    type:'bar',
-    data:{ labels:['Revenue (Cr)','Expenses (Cr)'], datasets:[{ label:'Amount', data:[revCr, expCr], backgroundColor:[CHART_COLORS[0], CHART_COLORS[4] || '#f50057'] }] },
-    options:{ responsive:true, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{color:'#546e7a'}, grid:{color:'#e3f2fd'} }, x:{ ticks:{color:'#546e7a'} } } }
+  // Scenario metrics
+  const scenStudents = [120, 200, 300];
+  const scenData = scenStudents.map((s) => {
+    const fixed = scaleFixed ? fixedOpex * (s / students) : fixedOpex; // optional scaling
+    const m = metrics({students: s, fee, scholarshipPct, variable: variablePerStudent, fixed, capex, growth});
+    return { Scenario: `${s} students`, Students: s, Revenue: m.netRevenue, Expenses: m.totalExpenses, Profit: m.profit, Margin: m.margin, BE: m.be, ROI: m.roi, IRR: m.irrPct };
   });
 
-  profit.parentElement.style.borderColor = m.pnl>=0 ? '#c8e6c9' : '#ffcdd2';
-  profit.parentElement.style.background = m.pnl>=0 ? '#e8f5e9' : '#ffebee';
-}
+  const budgetBreakdown = [
+    { name: "Fixed OPEX", value: fixedOpex },
+    { name: "Variable (total)", value: base.variableCosts },
+  ];
 
-['input','change'].forEach(evt=>{
-  elStudents.addEventListener(evt, updateFinance);
-  elFee.addEventListener(evt, updateFinance);
-  elVar.addEventListener(evt, updateFinance);
-  elDisc.addEventListener(evt, updateFinance);
-  elFixed.addEventListener(evt, updateFinance);
-});
-
-document.getElementById('fixed').value = +budgetSelect.value; 
-updateFinance();
-
-function snapshot(){
-  return {
-    students:+elStudents.value, fee:+elFee.value, varCost:+elVar.value, disc:+elDisc.value, fixed:+elFixed.value
+  const exportPNG = async () => {
+    if (!containerRef.current) return;
+    const canvas = await html2canvas(containerRef.current, { scale: 2, backgroundColor: "#ffffff" });
+    const data = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = data; a.download = `Launch-Control-${Date.now()}.png`; a.click();
   };
+
+  const exportPDF = async () => {
+    if (!containerRef.current) return;
+    const canvas = await html2canvas(containerRef.current, { scale: 2, backgroundColor: "#ffffff" });
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [canvas.width, canvas.height] });
+    pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+    pdf.save(`Launch-Control-${Date.now()}.pdf`);
+  };
+
+  return (
+    <div className="w-full p-4 space-y-6" ref={containerRef}>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Launch Control Center — Year‑1 Gantt & Financials</h1>
+        <div className="flex gap-2">
+          <Button onClick={exportPNG} className="rounded-2xl"><Download className="w-4 h-4 mr-2"/>Export PNG</Button>
+          <Button variant="secondary" onClick={exportPDF} className="rounded-2xl"><Download className="w-4 h-4 mr-2"/>Export PDF</Button>
+        </div>
+      </div>
+
+      {/* Presets */}
+      <div className="flex gap-2">
+        <Button className="rounded-2xl" onClick={() => applyPreset("Lean 1.5 Cr")}>Preset: Lean ₹1.5 Cr</Button>
+        <Button variant="secondary" className="rounded-2xl" onClick={() => applyPreset("PDF 2.1 Cr")}>Preset: PDF ₹2.1 Cr</Button>
+      </div>
+
+      {/* Inputs */}
+      <Card className="shadow-sm border">
+        <CardContent className="p-4 grid md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm">Students</label>
+            <Input type="number" value={students} onChange={(e)=>setStudents(parseInt(e.target.value||"0"))} />
+            <label className="text-sm">Fee per Student (₹ Lakhs)</label>
+            <Input type="number" step="0.01" value={fee} onChange={(e)=>setFee(parseFloat(e.target.value||"0"))} />
+            <label className="text-sm">Scholarship / Discount (%)</label>
+            <Input type="number" step="1" value={scholarshipPct} onChange={(e)=>setScholarshipPct(parseFloat(e.target.value||"0"))} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm">Variable Cost per Student (₹ Lakhs)</label>
+            <Input type="number" step="0.01" value={variablePerStudent} onChange={(e)=>setVariablePerStudent(parseFloat(e.target.value||"0"))} />
+            <label className="text-sm">Fixed Expenses (OPEX, ₹ Lakhs)</label>
+            <Input type="number" step="1" value={fixedOpex} onChange={(e)=>setFixedOpex(parseFloat(e.target.value||"0"))} />
+            <label className="text-sm">CapEx (₹ Lakhs)</label>
+            <Input type="number" step="1" value={capex} onChange={(e)=>setCapex(parseFloat(e.target.value||"0"))} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm">IRR Growth Assumption (% YoY on profit)</label>
+            <Input type="number" step="1" value={growth} onChange={(e)=>setGrowth(parseFloat(e.target.value||"0"))} />
+            <label className="text-sm flex items-center gap-2"><input type="checkbox" checked={scaleFixed} onChange={(e)=>setScaleFixed(e.target.checked)} />Scale fixed OPEX with scenario size</label>
+            <div className="flex gap-2 pt-2">
+              <Button className="rounded-2xl" onClick={()=>applyPreset("Lean 1.5 Cr")}>Lean</Button>
+              <Button variant="secondary" className="rounded-2xl" onClick={()=>applyPreset("PDF 2.1 Cr")}>PDF</Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Gantt — cleaned using inline CSS grid placement */}
+      <Card className="shadow-sm border">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-3"><Calendar className="w-5 h-5"/><h2 className="text-xl font-medium">Detailed Year‑1 Gantt (Color‑coded)</h2></div>
+          <div className="grid grid-cols-8 text-xs text-muted-foreground mb-2">
+            {months.map((m) => (<div key={m} className="text-center font-medium border-b pb-1">{m}</div>))}
+          </div>
+          <div className="space-y-1">
+            {TASKS.map((t, idx) => {
+              const s = toIdx(t.start) + 1; // 1-based
+              const sp = span(t.start, t.end);
+              return (
+                <div key={idx} className="grid grid-cols-8 items-stretch h-8 border-b">
+                  <div style={{gridColumnStart: s, gridColumnEnd: s + sp}} className="flex items-center">
+                    <div className="w-full h-5 rounded-xl shadow flex items-center justify-between px-2 text-[11px] text-white" style={{backgroundColor: COLORS[t.cat]}}>
+                      <span className="font-semibold truncate">{t.task}</span>
+                      <span className="opacity-90 ml-2 truncate">{t.cat} • {t.owner}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex flex-wrap gap-3 mt-3">
+            {Object.entries(COLORS).map(([k, v]) => (
+              <div key={k} className="flex items-center gap-2 text-sm"><div className="w-4 h-4 rounded" style={{backgroundColor: v}}></div><span>{k}</span></div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Budget Snapshot */}
+      <Card className="shadow-sm border">
+        <CardContent className="p-4 space-y-4">
+          <div className="flex items-center gap-2 mb-2"><Calculator className="w-5 h-5"/><h2 className="text-xl font-medium">Budget & ROI (₹ Lakhs, rounded to 1 decimal)</h2></div>
+
+          <div className="grid md:grid-cols-4 gap-4">
+            <Card className="bg-slate-50"><CardContent className="p-3"><div className="text-xs">Gross Revenue</div><div className="text-lg font-semibold">₹ {fmt1(base.grossRevenue)} L</div></CardContent></Card>
+            <Card className="bg-slate-50"><CardContent className="p-3"><div className="text-xs">Net Revenue</div><div className="text-lg font-semibold">₹ {fmt1(base.netRevenue)} L</div></CardContent></Card>
+            <Card className="bg-slate-50"><CardContent className="p-3"><div className="text-xs">Total Expenses</div><div className="text-lg font-semibold">₹ {fmt1(base.totalExpenses)} L</div></CardContent></Card>
+            <Card className="bg-slate-50"><CardContent className="p-3"><div className="text-xs">Profit / (Loss)</div><div className={`text-lg font-semibold ${base.profit>=0?"text-emerald-700":"text-red-600"}`}>₹ {fmt1(base.profit)} L</div></CardContent></Card>
+          </div>
+          <div className="grid md:grid-cols-4 gap-4">
+            <Card><CardContent className="p-3"><div className="text-xs">Profit Margin</div><div className="text-lg font-semibold">{fmt1(base.margin)}%</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-xs">Breakeven Students</div><div className="text-lg font-semibold">{base.be}</div><div className="text-xs text-muted-foreground">Contribution/student (net): ₹ {fmt1(base.contribution)} L</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-xs">Year‑1 ROI vs CapEx</div><div className="text-lg font-semibold">{fmt1(base.roi)}%</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-xs">Payback (years)</div><div className="text-lg font-semibold">{isFinite(base.payback)?fmt1(base.payback):"N/A"}</div></CardContent></Card>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4 items-center">
+            <div>
+              <div className="flex items-center gap-2 mb-2"><GitBranch className="w-5 h-5"/><h3 className="font-medium">3‑Year IRR</h3></div>
+              <div className="text-2xl font-semibold">{fmt1(base.irrPct)}%</div>
+              <div className="text-xs text-muted-foreground">Cash flows: [−CapEx, Y1 Profit, Y2 Profit, Y3 Profit]</div>
+            </div>
+            <div className="h-44">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={[{name:"Fixed OPEX", value: fixedOpex},{name:"Variable (total)", value: base.variableCosts}]} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+                  <XAxis dataKey="name"/>
+                  <YAxis/>
+                  <Tooltip formatter={(v)=>`₹ ${fmt1(v)} L`}/>
+                  <Bar dataKey="value" fill="#6366F1">
+                    <LabelList dataKey="value" position="top" formatter={(v)=>`${fmt1(v)} L`}/>
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Scenario Comparison */}
+      <Card className="shadow-sm border">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2 mb-1"><Layers className="w-5 h-5"/><h2 className="text-xl font-medium">Scenario Compare (rounded to 1 decimal)</h2></div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b">
+                  <th className="py-2">Scenario</th>
+                  <th>Net Revenue (₹ L)</th>
+                  <th>Expenses (₹ L)</th>
+                  <th>Profit (₹ L)</th>
+                  <th>Margin %</th>
+                  <th>Breakeven</th>
+                  <th>ROI %</th>
+                  <th>IRR %</th>
+                </tr>
+              </thead>
+              <tbody>
+                {scenData.map((r, i) => (
+                  <tr key={i} className="border-b">
+                    <td className="py-2 font-medium">{r.Scenario}</td>
+                    <td>{fmt1(r.Revenue)}</td>
+                    <td>{fmt1(r.Expenses)}</td>
+                    <td className={`${r.Profit>=0?"text-emerald-700":"text-red-600"}`}>{fmt1(r.Profit)}</td>
+                    <td>{fmt1(r.Margin)}</td>
+                    <td>{r.BE}</td>
+                    <td>{fmt1(r.ROI)}</td>
+                    <td>{fmt1(r.IRR)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="text-xs text-muted-foreground">Note: All figures in ₹ Lakhs (1 decimal). 100 Lakhs = ₹1 Cr. Toggle the checkbox to scale fixed OPEX with scenario size if desired.</div>
+    </div>
+  );
 }
-
-function renderSlot(el, data){
-  if(!data){ el.innerHTML = '<em>Empty</em>'; return; }
-  const m = computeMetrics(data.students, data.fee, data.varCost, data.disc, data.fixed);
-  el.innerHTML = `Students: ${data.students}<br/>Fee: ${data.fee} L<br/>Fixed: ${data.fixed} L<br/><strong>Profit: ${fmtLakhs(m.pnl)}</strong>`;
-}
-
-document.getElementById('saveA').addEventListener('click', ()=>{ slotA = snapshot(); localStorage.setItem('slotA', JSON.stringify(slotA)); renderSlot(slotAel, slotA); });
-document.getElementById('saveB').addEventListener('click', ()=>{ slotB = snapshot(); localStorage.setItem('slotB', JSON.stringify(slotB)); renderSlot(slotBel, slotB); });
-
-document.getElementById('clearSlots').addEventListener('click', ()=>{ slotA=null; slotB=null; localStorage.removeItem('slotA'); localStorage.removeItem('slotB'); renderSlot(slotAel,null); renderSlot(slotBel,null); });
-
-try{ if(localStorage.getItem('slotA')){ slotA=JSON.parse(localStorage.getItem('slotA')); renderSlot(slotAel,slotA); } if(localStorage.getItem('slotB')){ slotB=JSON.parse(localStorage.getItem('slotB')); renderSlot(slotBel,slotB); } }catch(e){}
-
-document.getElementById('compareSlots').addEventListener('click', ()=>{
-  if(!slotA || !slotB){ alert('Save both Slot A and Slot B before comparing.'); return; }
-  const ma = computeMetrics(slotA.students, slotA.fee, slotA.varCost, slotA.disc, slotA.fixed);
-  const mb = computeMetrics(slotB.students, slotB.fee, slotB.varCost, slotB.disc, slotB.fixed);
-  const labels = ['Slot A Profit (Cr)','Slot B Profit (Cr)'];
-  const data = [ma.pnl/100, mb.pnl/100];
-  const cmpWin = window.open('', 'compare', 'width=700,height=420');
-  cmpWin.document.write('<html><head><title>Scenario Comparison</title></head><body style="font-family:Arial;padding:12px;background:#fff;color:#111">');
-  cmpWin.document.write('<h3>Scenario Comparison</h3>');
-  cmpWin.document.write(`<div style="display:flex;gap:12px"><div style="padding:8px;border:1px solid #ddd; border-radius:8px;"><strong>Slot A:</strong><br/>Students: ${slotA.students}<br/>Profit: ${fmtLakhs(ma.pnl)}</div><div style="padding:8px;border:1px solid #ddd; border-radius:8px;"><strong>Slot B:</strong><br/>Students: ${slotB.students}<br/>Profit: ${fmtLakhs(mb.pnl)}</div></div>`);
-  cmpWin.document.write('<canvas id="cmpCanvas" width="640" height="240"></canvas>');
-  cmpWin.document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>');
-  cmpWin.document.write(`<script>new Chart(document.getElementById('cmpCanvas'),{type:'bar',data:{labels:${JSON.stringify(labels)},datasets:[{label:'Profit (Cr)',data:${JSON.stringify(data)},backgroundColor:['#2979ff','#ffab00']}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}})<\/script>`);
-  cmpWin.document.write('</body></html>');
-  cmpWin.document.close();
-});
-
-// =========================
-// D) NOTES MODAL
-// =========================
-const noteModal = document.getElementById('noteModal');
-const noteTitle = document.getElementById('noteTitle');
-const noteText = document.getElementById('noteText');
-const saveNoteBtn = document.getElementById('saveNote');
-const deleteNoteBtn = document.getElementById('deleteNote');
-const closeNoteBtn = document.getElementById('closeNote');
-let activeNoteTask = null;
-
-function openNoteEditor(taskId, taskName){
-  activeNoteTask = taskId;
-  noteTitle.textContent = taskName;
-  noteText.value = notes[taskId] || '';
-  noteModal.style.display = 'block';
-}
-
-saveNoteBtn.addEventListener('click', ()=>{
-  if(!activeNoteTask) return;
-  const v = noteText.value.trim();
-  if(v){ notes[activeNoteTask] = v; } else { delete notes[activeNoteTask]; }
-  localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-  noteModal.style.display = 'none';
-  render();
-});
-
-deleteNoteBtn.addEventListener('click', ()=>{
-  if(activeNoteTask && notes[activeNoteTask]){ delete notes[activeNoteTask]; localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); }
-  noteModal.style.display = 'none'; render();
-});
-
-closeNoteBtn.addEventListener('click', ()=>{ noteModal.style.display='none'; });
-
-// =========================
-// E) PRINTING
-// =========================
-function printWithCover(){
-  const cover = document.createElement('div');
-  cover.id = 'coverPage';
-  cover.style.position='fixed';cover.style.left='0';cover.style.top='0';cover.style.width='100%';cover.style.height='100%';cover.style.background='#ffffff';cover.style.zIndex='9999';cover.style.display='flex';cover.style.flexDirection='column';cover.style.alignItems='center';cover.style.justifyContent='center';
-  cover.innerHTML = `<div style="text-align:center;color:#0d47a1;padding:40px;font-family:Inter,Arial;"><h1 style='color:#0d47a1; font-size:32px;'>Medchal Integrated College</h1><p style='color:#546e7a;margin-top:6px; font-size: 18px;'>Investor Presentation - Launch Plan (March 2026)</p><p style='margin-top:24px;color:#78909c;'>Prepared on: ${new Date().toLocaleDateString()}</p></div>`;
-  document.body.insertBefore(cover, document.body.firstChild);
-  setTimeout(()=>{ window.print(); cover.remove(); }, 500);
-}
-
-render();
-</script>
-</body>
-</html>
